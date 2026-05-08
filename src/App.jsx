@@ -1375,7 +1375,7 @@ function LoginPage({ onLogin, onGoToRegister }) {
 
     try {
       const response = await axios.post(
-        "http://localhost:8080/api/auth/login",
+        "/api/auth/login",
         loginData
       );
 
@@ -1505,7 +1505,7 @@ function RegisterPage({ onRegisterSuccess, onGoToLogin }) {
 
     try {
       const response = await axios.post(
-        "http://localhost:8080/api/auth/register",
+        "/api/auth/register",
         {
           username: registerData.username,
           password: registerData.password
