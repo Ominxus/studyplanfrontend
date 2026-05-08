@@ -1374,10 +1374,7 @@ function LoginPage({ onLogin, onGoToRegister }) {
     e.preventDefault();
 
     try {
-      const response = await axios.post(
-        "/api/auth/login",
-        loginData
-      );
+      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, loginData);
 
       onLogin(response.data);
       setError("");
@@ -1504,13 +1501,10 @@ function RegisterPage({ onRegisterSuccess, onGoToLogin }) {
     }
 
     try {
-      const response = await axios.post(
-        "/api/auth/register",
-        {
-          username: registerData.username,
-          password: registerData.password
-        }
-      );
+      const response = await axios.post(`${API_BASE_URL}/api/auth/register`, {
+  username: registerData.username,
+  password: registerData.password
+});
 
       onRegisterSuccess(response.data);
       setError("");
