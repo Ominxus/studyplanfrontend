@@ -24,6 +24,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const STUDY_PLAN_API = `${API_BASE_URL}/api/studyplans`;
 const CONFIG_API = `${API_BASE_URL}/api/config`;
 const SCHOOL_YEARS_API = `${CONFIG_API}/school-years`;
+const AUTH_API = `${API_BASE_URL}/api/auth`;
 
 function normalizeCategories(data) {
   return data.map((cat) => ({
@@ -1374,7 +1375,7 @@ function LoginPage({ onLogin, onGoToRegister }) {
     e.preventDefault();
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, loginData);
+      const response = await axios.post(`${AUTH_API}/login`, loginData);
 
       onLogin(response.data);
       setError("");
@@ -1501,7 +1502,7 @@ function RegisterPage({ onRegisterSuccess, onGoToLogin }) {
     }
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/auth/register`, {
+      const response = await axios.post(`${AUTH_API}/register`, {
   username: registerData.username,
   password: registerData.password
 });
