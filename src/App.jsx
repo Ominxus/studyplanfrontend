@@ -69,35 +69,35 @@ function StudyPlanForm() {
       setSchoolYears(schoolYearResponse.data || []);
 
       setSubjects(
-  normalized.flatMap((cat) =>
-    (cat.subjects || []).map((sub) => {
-      let autoGroup = sub.groupName || null;
+        normalized.flatMap((cat) =>
+          (cat.subjects || []).map((sub) => {
+            let autoGroup = sub.groupName || null;
 
-      const subjectName = sub.name.toLowerCase();
+            const subjectName = sub.name.toLowerCase();
 
-      if (subjectName.includes("matematika")) {
-        autoGroup = "matematika";
-      }
+            if (subjectName.includes("matematika")) {
+              autoGroup = "matematika";
+            }
 
-      if (
-        subjectName.includes("lietuvių kalba") ||
-        subjectName.includes("lietuviu kalba")
-      ) {
-        autoGroup = "lietuviu";
-      }
+            if (
+              subjectName.includes("lietuvių kalba") ||
+              subjectName.includes("lietuviu kalba")
+            ) {
+              autoGroup = "lietuviu";
+            }
 
-      return {
-        category: cat.name,
-        name: sub.name,
-        gradeIiiHours: Number(sub.gradeIiiHours || 0),
-        gradeIvHours: Number(sub.gradeIvHours || 0),
-        group: autoGroup,
-        selected: false,
-        selectedGrade: "III"
-      };
-    })
-  )
-);
+            return {
+              category: cat.name,
+              name: sub.name,
+              gradeIiiHours: Number(sub.gradeIiiHours || 0),
+              gradeIvHours: Number(sub.gradeIvHours || 0),
+              group: autoGroup,
+              selected: false
+            };
+          })
+        )
+      );
+
       setConfigError("");
     } catch (error) {
       console.error("Could not load configuration:", error);
@@ -131,46 +131,29 @@ function StudyPlanForm() {
   };
 
   const handleSubjectSelected = (index, value) => {
-  const updated = [...subjects];
-  const currentSubject = updated[index];
-
-  if (value && currentSubject?.group) {
-    updated.forEach((subject, subjectIndex) => {
-      if (
-        subjectIndex !== index &&
-        subject.group === currentSubject.group
-      ) {
-        subject.selected = false;
-      }
-    });
-  }
-
-  updated[index].selected = value;
-  setSubjects(updated);
-};
-
-  const handleGradeChange = (index, grade) => {
     const updated = [...subjects];
-    updated[index].selectedGrade = grade;
+    const currentSubject = updated[index];
+
+    if (value && currentSubject?.group) {
+      updated.forEach((subject, subjectIndex) => {
+        if (subjectIndex !== index && subject.group === currentSubject.group) {
+          subject.selected = false;
+        }
+      });
+    }
+
+    updated[index].selected = value;
     setSubjects(updated);
-  };
-
-  const getSelectedHours = (subject) => {
-    if (!subject.selected) return 0;
-
-    return subject.selectedGrade === "III"
-      ? Number(subject.gradeIiiHours || 0)
-      : Number(subject.gradeIvHours || 0);
   };
 
   const totalSubjects = subjects.filter((s) => s.selected).length;
 
   const totalGradeIiiHours = subjects
-    .filter((s) => s.selected && s.selectedGrade === "III")
+    .filter((s) => s.selected)
     .reduce((sum, s) => sum + Number(s.gradeIiiHours || 0), 0);
 
   const totalGradeIvHours = subjects
-    .filter((s) => s.selected && s.selectedGrade === "IV")
+    .filter((s) => s.selected)
     .reduce((sum, s) => sum + Number(s.gradeIvHours || 0), 0);
 
   const totalHours = totalGradeIiiHours + totalGradeIvHours;
@@ -270,11 +253,8 @@ function StudyPlanForm() {
         .filter((s) => s.selected)
         .map((s) => ({
           subject: s.name,
-          selectedGrade: s.selectedGrade,
-          gradeIiiHours:
-            s.selectedGrade === "III" ? Number(s.gradeIiiHours || 0) : 0,
-          gradeIvHours:
-            s.selectedGrade === "IV" ? Number(s.gradeIvHours || 0) : 0
+          gradeIiiHours: Number(s.gradeIiiHours || 0),
+          gradeIvHours: Number(s.gradeIvHours || 0)
         }))
     };
 
@@ -291,8 +271,7 @@ function StudyPlanForm() {
       setSubjects(
         subjects.map((s) => ({
           ...s,
-          selected: false,
-          selectedGrade: "III"
+          selected: false
         }))
       );
     } catch (error) {
@@ -346,12 +325,12 @@ function StudyPlanForm() {
               </div>
 
               <h1 className="text-5xl md:text-7xl font-black leading-[0.95] tracking-tight">
-                Choose your grade and subjects.
+                Choose your two-year study plan.
               </h1>
 
               <p className="mt-7 text-blue-50 text-lg max-w-xl leading-relaxed">
-                Select a subject, choose Grade III or Grade IV, and the correct
-                number of hours will be applied automatically.
+                Select a subject once and the Grade III and Grade IV hours will
+                be added automatically.
               </p>
             </div>
 
@@ -545,8 +524,8 @@ function StudyPlanForm() {
                         <tr>
                           <th className="p-4 text-center">Select</th>
                           <th className="p-4 text-left">Subject</th>
-                          <th className="p-4 text-center">Choose Grade</th>
-                          <th className="p-4 text-center">Hours</th>
+                          <th className="p-4 text-center">Grade III Hours</th>
+                          <th className="p-4 text-center">Grade IV Hours</th>
                         </tr>
                       </thead>
 
@@ -557,7 +536,6 @@ function StudyPlanForm() {
                           .map((sub) => {
                             const selectedCount = getCategoryCount(cat.name);
                             const isMaxReached = selectedCount >= cat.max;
-                            const selectedHours = getSelectedHours(sub);
                             const blockedByGroup = isBlockedByGroup(sub.index);
 
                             return (
@@ -606,35 +584,30 @@ function StudyPlanForm() {
                                 </td>
 
                                 <td className="p-5 text-center">
-                                  <select
-                                    value={sub.selectedGrade}
-                                    disabled={!sub.selected}
-                                    onChange={(e) =>
-                                      handleGradeChange(
-                                        sub.index,
-                                        e.target.value
-                                      )
-                                    }
-                                    className="border-2 border-blue-100 bg-white rounded-xl px-4 py-2 font-bold disabled:bg-slate-100 disabled:text-slate-400 focus:outline-none focus:border-blue-500"
+                                  <span
+                                    className={`inline-flex items-center justify-center font-black px-4 py-2 rounded-full ${
+                                      sub.selected
+                                        ? "bg-yellow-300 text-blue-950"
+                                        : "bg-slate-100 text-slate-400"
+                                    }`}
                                   >
-                                    <option value="III">
-                                      Grade III ({sub.gradeIiiHours}h)
-                                    </option>
-                                    <option value="IV">
-                                      Grade IV ({sub.gradeIvHours}h)
-                                    </option>
-                                  </select>
+                                    {sub.selected
+                                      ? `${sub.gradeIiiHours}h`
+                                      : "—"}
+                                  </span>
                                 </td>
 
                                 <td className="p-5 text-center">
                                   <span
                                     className={`inline-flex items-center justify-center font-black px-4 py-2 rounded-full ${
-                                      sub.selectedGrade === "III"
-                                        ? "bg-yellow-300 text-blue-950"
-                                        : "bg-blue-600 text-white"
+                                      sub.selected
+                                        ? "bg-blue-600 text-white"
+                                        : "bg-slate-100 text-slate-400"
                                     }`}
                                   >
-                                    {sub.selected ? `${selectedHours}h` : "—"}
+                                    {sub.selected
+                                      ? `${sub.gradeIvHours}h`
+                                      : "—"}
                                   </span>
                                 </td>
                               </tr>
