@@ -275,9 +275,14 @@ function StudyPlanForm() {
         }))
       );
     } catch (error) {
-      console.error("Submit failed:", error);
-      alert("Could not submit study plan. Check backend connection.");
-    }
+  console.error("Submit failed:", error);
+
+  if (error.response?.data) {
+    alert(error.response.data);
+  } else {
+    alert("Could not submit study plan. Check backend connection.");
+  }
+}
   };
 
   if (loadingConfig) {
