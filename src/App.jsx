@@ -101,17 +101,26 @@ function StudyPlanForm() {
   const getCategoryCount = (category) =>
     subjects.filter((s) => s.category === category && s.selected).length;
 
-  const handleSubjectSelected = (index, value) => {
-    const updated = [...subjects];
+  const isBlockedByGroup = (subjectIndex) => {
+    const currentSubject = subjects[subjectIndex];
 
-    if (value && updated[index].group) {
-      updated.forEach((s, i) => {
-        if (s.group === updated[index].group && i !== index) {
-          s.selected = false;
-        }
-      });
+    if (!currentSubject?.group) return false;
+
+    return subjects.some(
+      (subject, index) =>
+        index !== subjectIndex &&
+        subject.selected &&
+        subject.group === currentSubject.group
+    );
+  };
+
+  const handleSubjectSelected = (index, value) => {
+    if (value && isBlockedByGroup(index)) {
+      alert("Galima pasirinkti tik vieną dalyką iš šios grupės.");
+      return;
     }
 
+    const updated = [...subjects];
     updated[index].selected = value;
     setSubjects(updated);
   };
@@ -525,6 +534,7 @@ function StudyPlanForm() {
                             const selectedCount = getCategoryCount(cat.name);
                             const isMaxReached = selectedCount >= cat.max;
                             const selectedHours = getSelectedHours(sub);
+                            const blockedByGroup = isBlockedByGroup(sub.index);
 
                             return (
                               <tr
@@ -539,7 +549,10 @@ function StudyPlanForm() {
                                   <input
                                     type="checkbox"
                                     checked={sub.selected}
-                                    disabled={!sub.selected && isMaxReached}
+                                    disabled={
+                                      !sub.selected &&
+                                      (isMaxReached || blockedByGroup)
+                                    }
                                     className="w-5 h-5 accent-blue-600 disabled:cursor-not-allowed"
                                     onChange={(e) =>
                                       handleSubjectSelected(
@@ -548,6 +561,12 @@ function StudyPlanForm() {
                                       )
                                     }
                                   />
+
+                                  {!sub.selected && blockedByGroup && (
+                                    <div className="text-[10px] text-red-500 font-black mt-2">
+                                      Group option already selected
+                                    </div>
+                                  )}
                                 </td>
 
                                 <td className="p-5">
@@ -777,38 +796,38 @@ function ManageStudyPlanConfig() {
   };
 
   const addSubject = async (categoryId) => {
-  const subject = newSubjectByCategory[categoryId];
+    const subject = newSubjectByCategory[categoryId];
 
-  if (!subject?.name?.trim()) {
-    alert("Subject name is required.");
-    return;
-  }
+    if (!subject?.name?.trim()) {
+      alert("Subject name is required.");
+      return;
+    }
 
-  try {
-    await axios.post(`${CONFIG_API}/categories/${categoryId}/subjects`, {
-      name: subject.name,
-      gradeIiiHours: Number(subject.gradeIiiHours || 0),
-      gradeIvHours: Number(subject.gradeIvHours || 0),
-      groupName: subject.groupName || null
-    });
+    try {
+      await axios.post(`${CONFIG_API}/categories/${categoryId}/subjects`, {
+        name: subject.name,
+        gradeIiiHours: Number(subject.gradeIiiHours || 0),
+        gradeIvHours: Number(subject.gradeIvHours || 0),
+        groupName: subject.groupName || null
+      });
 
-    setNewSubjectByCategory({
-      ...newSubjectByCategory,
-      [categoryId]: {
-        name: "",
-        gradeIiiHours: "",
-        gradeIvHours: "",
-        groupName: ""
-      }
-    });
+      setNewSubjectByCategory({
+        ...newSubjectByCategory,
+        [categoryId]: {
+          name: "",
+          gradeIiiHours: "",
+          gradeIvHours: "",
+          groupName: ""
+        }
+      });
 
-    fetchConfig();
-    alert("Subject added successfully.");
-  } catch (error) {
-    console.error("Add subject failed:", error);
-    alert("Could not add subject. Check backend console.");
-  }
-};
+      fetchConfig();
+      alert("Subject added successfully.");
+    } catch (error) {
+      console.error("Add subject failed:", error);
+      alert("Could not add subject. Check backend console.");
+    }
+  };
 
   const saveSubject = async (subject) => {
     if (!subject.name.trim()) {
@@ -1347,13 +1366,13 @@ function ManageStudyPlanConfig() {
 
                     <div className="lg:col-span-2">
                       <button
-  type="button"
-  onClick={() => addSubject(cat.id)}
-  className="w-full bg-blue-600 text-white font-black px-5 py-4 rounded-2xl hover:bg-blue-700 transition flex items-center justify-center gap-2"
->
-  <Plus size={18} />
-  Add
-</button>
+                        type="button"
+                        onClick={() => addSubject(cat.id)}
+                        className="w-full bg-blue-600 text-white font-black px-5 py-4 rounded-2xl hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                      >
+                        <Plus size={18} />
+                        Add
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1510,9 +1529,9 @@ function RegisterPage({ onRegisterSuccess, onGoToLogin }) {
 
     try {
       const response = await axios.post(`${AUTH_API}/register`, {
-  username: registerData.username,
-  password: registerData.password
-});
+        username: registerData.username,
+        password: registerData.password
+      });
 
       onRegisterSuccess(response.data);
       setError("");
