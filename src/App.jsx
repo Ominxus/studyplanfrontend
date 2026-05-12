@@ -69,19 +69,35 @@ function StudyPlanForm() {
       setSchoolYears(schoolYearResponse.data || []);
 
       setSubjects(
-        normalized.flatMap((cat) =>
-          (cat.subjects || []).map((sub) => ({
-            category: cat.name,
-            name: sub.name,
-            gradeIiiHours: Number(sub.gradeIiiHours || 0),
-            gradeIvHours: Number(sub.gradeIvHours || 0),
-            group: sub.groupName || null,
-            selected: false,
-            selectedGrade: "III"
-          }))
-        )
-      );
+  normalized.flatMap((cat) =>
+    (cat.subjects || []).map((sub) => {
+      let autoGroup = sub.groupName || null;
 
+      const subjectName = sub.name.toLowerCase();
+
+      if (subjectName.includes("matematika")) {
+        autoGroup = "matematika";
+      }
+
+      if (
+        subjectName.includes("lietuvių kalba") ||
+        subjectName.includes("lietuviu kalba")
+      ) {
+        autoGroup = "lietuviu";
+      }
+
+      return {
+        category: cat.name,
+        name: sub.name,
+        gradeIiiHours: Number(sub.gradeIiiHours || 0),
+        gradeIvHours: Number(sub.gradeIvHours || 0),
+        group: autoGroup,
+        selected: false,
+        selectedGrade: "III"
+      };
+    })
+  )
+);
       setConfigError("");
     } catch (error) {
       console.error("Could not load configuration:", error);
@@ -115,15 +131,23 @@ function StudyPlanForm() {
   };
 
   const handleSubjectSelected = (index, value) => {
-    if (value && isBlockedByGroup(index)) {
-      alert("Galima pasirinkti tik vieną dalyką iš šios grupės.");
-      return;
-    }
+  const updated = [...subjects];
+  const currentSubject = updated[index];
 
-    const updated = [...subjects];
-    updated[index].selected = value;
-    setSubjects(updated);
-  };
+  if (value && currentSubject?.group) {
+    updated.forEach((subject, subjectIndex) => {
+      if (
+        subjectIndex !== index &&
+        subject.group === currentSubject.group
+      ) {
+        subject.selected = false;
+      }
+    });
+  }
+
+  updated[index].selected = value;
+  setSubjects(updated);
+};
 
   const handleGradeChange = (index, grade) => {
     const updated = [...subjects];
