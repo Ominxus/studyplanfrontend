@@ -777,13 +777,14 @@ function ManageStudyPlanConfig() {
   };
 
   const addSubject = async (categoryId) => {
-    const subject = newSubjectByCategory[categoryId];
+  const subject = newSubjectByCategory[categoryId];
 
-    if (!subject?.name?.trim()) {
-      alert("Subject name is required.");
-      return;
-    }
+  if (!subject?.name?.trim()) {
+    alert("Subject name is required.");
+    return;
+  }
 
+  try {
     await axios.post(`${CONFIG_API}/categories/${categoryId}/subjects`, {
       name: subject.name,
       gradeIiiHours: Number(subject.gradeIiiHours || 0),
@@ -802,7 +803,12 @@ function ManageStudyPlanConfig() {
     });
 
     fetchConfig();
-  };
+    alert("Subject added successfully.");
+  } catch (error) {
+    console.error("Add subject failed:", error);
+    alert("Could not add subject. Check backend console.");
+  }
+};
 
   const saveSubject = async (subject) => {
     if (!subject.name.trim()) {
@@ -1341,12 +1347,13 @@ function ManageStudyPlanConfig() {
 
                     <div className="lg:col-span-2">
                       <button
-                        onClick={() => addSubject(cat.id)}
-                        className="w-full bg-blue-600 text-white font-black px-5 py-4 rounded-2xl hover:bg-blue-700 transition flex items-center justify-center gap-2"
-                      >
-                        <Plus size={18} />
-                        Add
-                      </button>
+  type="button"
+  onClick={() => addSubject(cat.id)}
+  className="w-full bg-blue-600 text-white font-black px-5 py-4 rounded-2xl hover:bg-blue-700 transition flex items-center justify-center gap-2"
+>
+  <Plus size={18} />
+  Add
+</button>
                     </div>
                   </div>
                 </div>
