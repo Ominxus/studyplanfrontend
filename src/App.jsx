@@ -37,22 +37,26 @@ function normalizeCategories(data) {
   }));
 }
 
-function StudyPlanForm() {
+function StudyPlanForm({ loggedInUser }) {
   const [categories, setCategories] = useState([]);
   const [schoolYears, setSchoolYears] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [loadingConfig, setLoadingConfig] = useState(true);
   const [configError, setConfigError] = useState("");
 
+  const studentNumberFromLogin = loggedInUser?.username || "";
+
+  const [existingPlan, setExistingPlan] = useState(null);
+
   const [studentInfo, setStudentInfo] = useState({
     fullName: "",
-    studentNumber: "",
+    studentNumber: studentNumberFromLogin,
     schoolYear: ""
   });
 
   useEffect(() => {
     fetchConfig();
-  }, []);
+  }, [studentNumberFromLogin]);
 
   const fetchConfig = async () => {
     try {
@@ -63,10 +67,36 @@ function StudyPlanForm() {
         axios.get(SCHOOL_YEARS_API)
       ]);
 
+      let existingPlanData = null;
+
+      if (studentNumberFromLogin) {
+        try {
+          const existingPlanResponse = await axios.get(
+            `${STUDY_PLAN_API}/student/${studentNumberFromLogin}`
+          );
+          existingPlanData = existingPlanResponse.data;
+        } catch (error) {
+          if (error.response?.status !== 404) {
+            throw error;
+          }
+        }
+      }
+
       const normalized = normalizeCategories(categoryResponse.data);
 
       setCategories(normalized);
       setSchoolYears(schoolYearResponse.data || []);
+      setExistingPlan(existingPlanData);
+
+      setStudentInfo({
+        fullName: existingPlanData?.fullName || "",
+        studentNumber: studentNumberFromLogin,
+        schoolYear: existingPlanData?.schoolYear || ""
+      });
+
+      const submittedSubjectNames = new Set(
+        (existingPlanData?.subjects || []).map((subject) => subject.subject)
+      );
 
       setSubjects(
         normalized.flatMap((cat) =>
@@ -92,7 +122,7 @@ function StudyPlanForm() {
               gradeIiiHours: Number(sub.gradeIiiHours || 0),
               gradeIvHours: Number(sub.gradeIvHours || 0),
               group: autoGroup,
-              selected: false
+              selected: submittedSubjectNames.has(sub.name)
             };
           })
         )
@@ -108,10 +138,31 @@ function StudyPlanForm() {
   };
 
   const handleStudentChange = (e) => {
+    if (e.target.name === "studentNumber") return;
+
     setStudentInfo({
       ...studentInfo,
       [e.target.name]: e.target.value
     });
+  };
+
+  const requestEditPermission = async () => {
+    try {
+      const response = await axios.post(
+        `${STUDY_PLAN_API}/request-edit/${studentNumberFromLogin}`
+      );
+
+      alert(response.data || "Edit request sent to admin.");
+      fetchConfig();
+    } catch (error) {
+      console.error("Edit request failed:", error);
+
+      if (error.response?.data) {
+        alert(error.response.data);
+      } else {
+        alert("Could not request edit permission.");
+      }
+    }
   };
 
   const getCategoryCount = (category) =>
@@ -246,7 +297,7 @@ function StudyPlanForm() {
 
     const payload = {
       fullName: studentInfo.fullName,
-      studentNumber: studentInfo.studentNumber,
+      studentNumber: studentNumberFromLogin,
       schoolYear: studentInfo.schoolYear,
       classYear: "",
       subjects: subjects
@@ -259,30 +310,28 @@ function StudyPlanForm() {
     };
 
     try {
+      if (existingPlan?.editApproved) {
+        await axios.put(
+          `${STUDY_PLAN_API}/update/${studentNumberFromLogin}`,
+          payload
+        );
+        alert("Study plan updated successfully!");
+        fetchConfig();
+        return;
+      }
+
       await axios.post(STUDY_PLAN_API, payload);
       alert("Submitted successfully!");
-
-      setStudentInfo({
-        fullName: "",
-        studentNumber: "",
-        schoolYear: ""
-      });
-
-      setSubjects(
-        subjects.map((s) => ({
-          ...s,
-          selected: false
-        }))
-      );
+      fetchConfig();
     } catch (error) {
-  console.error("Submit failed:", error);
+      console.error("Submit failed:", error);
 
-  if (error.response?.data) {
-    alert(error.response.data);
-  } else {
-    alert("Could not submit study plan. Check backend connection.");
-  }
-}
+      if (error.response?.data) {
+        alert(error.response.data);
+      } else {
+        alert("Could not submit study plan. Check backend connection.");
+      }
+    }
   };
 
   if (loadingConfig) {
@@ -315,6 +364,136 @@ function StudyPlanForm() {
     );
   }
 
+  if (existingPlan && !existingPlan.editApproved) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-yellow-100 px-6 py-10 md:px-10 md:py-12 font-['Inter']">
+        <div className="max-w-5xl mx-auto">
+          <section className="bg-gradient-to-br from-blue-700 via-blue-600 to-sky-500 text-white rounded-[2.5rem] shadow-2xl mb-10 p-8 md:p-12">
+            <div className="inline-flex items-center gap-2 bg-yellow-300 text-blue-950 px-4 py-2 rounded-full font-black text-sm mb-7">
+              <CheckCircle size={18} />
+              Submitted Study Plan
+            </div>
+
+            <h1 className="text-5xl md:text-6xl font-black leading-tight">
+              Your study plan has already been submitted.
+            </h1>
+
+            <p className="mt-6 text-blue-50 text-lg max-w-3xl">
+              You can only edit this study plan if an admin approves your edit
+              request.
+            </p>
+          </section>
+
+          <div className="bg-white border-4 border-blue-100 rounded-[2rem] shadow-xl p-7 md:p-9 mb-8">
+            <h2 className="text-3xl font-black text-slate-900 mb-6">
+              Submitted Information
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+              <div className="bg-blue-50 border-2 border-blue-100 rounded-2xl p-5">
+                <p className="text-xs uppercase tracking-wide font-black text-slate-500">
+                  Full Name
+                </p>
+                <p className="text-lg font-black text-slate-900 mt-2">
+                  {existingPlan.fullName}
+                </p>
+              </div>
+
+              <div className="bg-blue-50 border-2 border-blue-100 rounded-2xl p-5">
+                <p className="text-xs uppercase tracking-wide font-black text-slate-500">
+                  Student Number
+                </p>
+                <p className="text-lg font-black text-slate-900 mt-2">
+                  {existingPlan.studentNumber}
+                </p>
+              </div>
+
+              <div className="bg-blue-50 border-2 border-blue-100 rounded-2xl p-5">
+                <p className="text-xs uppercase tracking-wide font-black text-slate-500">
+                  School Years
+                </p>
+                <p className="text-lg font-black text-slate-900 mt-2">
+                  {existingPlan.schoolYear}
+                </p>
+              </div>
+            </div>
+
+            <div className="mb-8">
+              <h3 className="text-2xl font-black text-slate-900 mb-4">
+                Selected Subjects
+              </h3>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm border-2 border-blue-100 rounded-2xl overflow-hidden">
+                  <thead className="bg-blue-600 text-white uppercase text-xs tracking-wide">
+                    <tr>
+                      <th className="p-4 text-left">Subject</th>
+                      <th className="p-4 text-center">Grade III Hours</th>
+                      <th className="p-4 text-center">Grade IV Hours</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {(existingPlan.subjects || []).map((subject) => (
+                      <tr
+                        key={subject.id || subject.subject}
+                        className="border-b-2 border-blue-50"
+                      >
+                        <td className="p-4 font-black text-slate-900">
+                          {subject.subject}
+                        </td>
+                        <td className="p-4 text-center font-black">
+                          {subject.gradeIiiHours}h
+                        </td>
+                        <td className="p-4 text-center font-black">
+                          {subject.gradeIvHours}h
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="bg-yellow-100 border-2 border-yellow-300 rounded-2xl p-5 mb-6">
+              <p className="font-black text-yellow-900">
+                Edit Status: {existingPlan.editRequestStatus || "NONE"}
+              </p>
+
+              {existingPlan.editRequestStatus === "PENDING" && (
+                <p className="text-sm font-bold text-yellow-800 mt-2">
+                  Your edit request is waiting for admin approval.
+                </p>
+              )}
+
+              {existingPlan.editRequestStatus === "DENIED" && (
+                <p className="text-sm font-bold text-red-700 mt-2">
+                  Your last edit request was denied. You may request again if
+                  needed.
+                </p>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={requestEditPermission}
+              disabled={existingPlan.editRequestStatus === "PENDING"}
+              className={`w-full p-5 font-black text-lg rounded-[2rem] transition shadow-xl ${
+                existingPlan.editRequestStatus === "PENDING"
+                  ? "bg-slate-400 text-white cursor-not-allowed"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
+              }`}
+            >
+              {existingPlan.editRequestStatus === "PENDING"
+                ? "Edit Request Pending"
+                : "Request Permission to Edit"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-yellow-100 px-6 py-10 md:px-10 md:py-12 font-['Inter']">
       <div className="max-w-7xl mx-auto">
@@ -330,12 +509,15 @@ function StudyPlanForm() {
               </div>
 
               <h1 className="text-5xl md:text-7xl font-black leading-[0.95] tracking-tight">
-                Choose your two-year study plan.
+                {existingPlan?.editApproved
+                  ? "Update your approved study plan."
+                  : "Choose your two-year study plan."}
               </h1>
 
               <p className="mt-7 text-blue-50 text-lg max-w-xl leading-relaxed">
-                Select a subject once and the Grade III and Grade IV hours will
-                be added automatically.
+                {existingPlan?.editApproved
+                  ? "Your edit request was approved. Update your subjects and submit again."
+                  : "Select a subject once and the Grade III and Grade IV hours will be added automatically."}
               </p>
             </div>
 
@@ -405,6 +587,20 @@ function StudyPlanForm() {
           </div>
         </section>
 
+        {existingPlan?.editApproved && (
+          <div className="bg-green-100 border-4 border-green-300 text-green-900 p-7 md:p-8 mb-10 rounded-[2rem] shadow-xl">
+            <div className="flex items-center gap-4">
+              <div className="bg-white p-3 rounded-2xl">
+                <CheckCircle size={24} />
+              </div>
+              <span className="font-black">
+                Admin approved your edit request. After you submit the update,
+                editing will be locked again.
+              </span>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white border-4 border-blue-100 shadow-xl rounded-[2rem] p-7 md:p-9 mb-10">
           <div className="flex items-center gap-4 mb-7">
             <div className="bg-yellow-300 text-blue-950 p-3 rounded-2xl shadow-md">
@@ -433,8 +629,8 @@ function StudyPlanForm() {
               name="studentNumber"
               placeholder="Student number"
               value={studentInfo.studentNumber}
-              onChange={handleStudentChange}
-              className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white transition"
+              readOnly
+              className="w-full p-4 bg-slate-100 border-2 border-blue-100 rounded-2xl text-slate-700 cursor-not-allowed"
             />
 
             <select
@@ -638,6 +834,8 @@ function StudyPlanForm() {
             >
               {formWarnings.length > 0
                 ? "Complete Requirements First"
+                : existingPlan?.editApproved
+                ? "Update Study Plan 🚀"
                 : "Submit Study Plan 🚀"}
             </button>
           </div>
@@ -1460,7 +1658,7 @@ function LoginPage({ onLogin, onGoToRegister }) {
           <form onSubmit={handleLogin} className="space-y-6">
             <input
               name="username"
-              placeholder="Username"
+              placeholder="Username / Student number"
               value={loginData.username}
               onChange={handleChange}
               className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
@@ -1557,7 +1755,7 @@ function RegisterPage({ onRegisterSuccess, onGoToLogin }) {
           <h1 className="text-5xl font-black text-slate-900">Register</h1>
 
           <p className="text-slate-500 mt-3">
-            Create a student account to submit your study plan.
+            Use your student number as your username.
           </p>
         </div>
 
@@ -1570,7 +1768,7 @@ function RegisterPage({ onRegisterSuccess, onGoToLogin }) {
         <form onSubmit={handleRegister} className="space-y-6">
           <input
             name="username"
-            placeholder="Username"
+            placeholder="Username / Student number"
             value={registerData.username}
             onChange={handleChange}
             className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
@@ -1715,7 +1913,7 @@ export default function App() {
           <ManageStudyPlanConfig />
         )
       ) : (
-        <StudyPlanForm />
+        <StudyPlanForm loggedInUser={loggedInUser} />
       )}
     </div>
   );

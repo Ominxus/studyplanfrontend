@@ -2,28 +2,28 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import {
   Users,
-  BookOpen,
-  Clock,
   Download,
   RefreshCw,
   Search,
-  Filter,
   AlertTriangle,
   Inbox,
-  GraduationCap,
   Hash,
   ChevronDown,
   ChevronUp,
   Sparkles,
   CalendarDays,
   Trash2,
-  CheckSquare
+  CheckSquare,
+  CheckCircle,
+  XCircle,
+  Edit3
 } from "lucide-react";
 
 const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/api/studyplans`;
 
 export default function AdminDashboard() {
   const [plans, setPlans] = useState([]);
+  const [editRequests, setEditRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -41,12 +41,17 @@ export default function AdminDashboard() {
       setLoading(true);
       setRefreshing(true);
 
-      const response = await axios.get(API_BASE_URL);
+      const [plansResponse, editRequestsResponse] = await Promise.all([
+        axios.get(API_BASE_URL),
+        axios.get(`${API_BASE_URL}/edit-requests`)
+      ]);
 
-      setPlans(response.data);
+      setPlans(plansResponse.data || []);
+      setEditRequests(editRequestsResponse.data || []);
       setSelectedPlanIds([]);
       setError("");
     } catch (err) {
+      console.error("Could not load dashboard data:", err);
       setError("Could not load submitted study plans.");
     } finally {
       setLoading(false);
@@ -121,9 +126,7 @@ export default function AdminDashboard() {
 
   const toggleSelectAllFiltered = () => {
     const filteredIds = filteredPlans.map((plan) => plan.id);
-    const allSelected = filteredIds.every((id) =>
-      selectedPlanIds.includes(id)
-    );
+    const allSelected = filteredIds.every((id) => selectedPlanIds.includes(id));
 
     if (allSelected) {
       setSelectedPlanIds((prev) =>
@@ -141,9 +144,7 @@ export default function AdminDashboard() {
     }
 
     if (
-      !confirm(
-        `Delete ${selectedPlanIds.length} selected student submission(s)?`
-      )
+      !confirm(`Delete ${selectedPlanIds.length} selected student submission(s)?`)
     ) {
       return;
     }
@@ -158,6 +159,42 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error("Delete failed:", error);
       alert("Could not delete selected students.");
+    }
+  };
+
+  const approveEditRequest = async (planId) => {
+    if (!confirm("Approve this student's edit request?")) return;
+
+    try {
+      const response = await axios.post(`${API_BASE_URL}/approve-edit/${planId}`);
+      alert(response.data || "Edit request approved.");
+      fetchPlans();
+    } catch (error) {
+      console.error("Approve failed:", error);
+
+      if (error.response?.data) {
+        alert(error.response.data);
+      } else {
+        alert("Could not approve edit request.");
+      }
+    }
+  };
+
+  const denyEditRequest = async (planId) => {
+    if (!confirm("Deny this student's edit request?")) return;
+
+    try {
+      const response = await axios.post(`${API_BASE_URL}/deny-edit/${planId}`);
+      alert(response.data || "Edit request denied.");
+      fetchPlans();
+    } catch (error) {
+      console.error("Deny failed:", error);
+
+      if (error.response?.data) {
+        alert(error.response.data);
+      } else {
+        alert("Could not deny edit request.");
+      }
     }
   };
 
@@ -180,8 +217,8 @@ export default function AdminDashboard() {
               </h1>
 
               <p className="text-blue-50 mt-6 max-w-2xl text-lg">
-                View submitted study plans, manage student submissions, and
-                export everything to Excel.
+                View submitted study plans, manage edit requests, manage
+                student submissions, and export everything to Excel.
               </p>
             </div>
 
@@ -208,7 +245,7 @@ export default function AdminDashboard() {
           </div>
         </section>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-5 mb-8">
           <div className="bg-white border-4 border-blue-100 p-6 rounded-[2rem] shadow-xl">
             <p className="text-sm text-slate-500 font-black">Students</p>
             <h2 className="text-5xl font-black text-blue-700">
@@ -236,6 +273,94 @@ export default function AdminDashboard() {
               {totalGradeIvHours}
             </h2>
           </div>
+
+          <div className="bg-white border-4 border-yellow-300 p-6 rounded-[2rem] shadow-xl">
+            <p className="text-sm text-slate-500 font-black">Edit Requests</p>
+            <h2 className="text-5xl font-black text-yellow-700">
+              {editRequests.length}
+            </h2>
+          </div>
+        </div>
+
+        <div className="bg-white border-4 border-yellow-300 p-6 md:p-8 rounded-[2rem] shadow-xl mb-8">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="bg-yellow-300 text-blue-950 p-3 rounded-2xl">
+              <Edit3 size={24} />
+            </div>
+
+            <div>
+              <h2 className="text-3xl font-black text-slate-900">
+                Edit Permission Requests
+              </h2>
+              <p className="text-sm text-slate-500 mt-1">
+                Approve or deny students who requested permission to update
+                their already submitted study plan.
+              </p>
+            </div>
+          </div>
+
+          {editRequests.length === 0 ? (
+            <div className="bg-blue-50 border-2 border-blue-100 rounded-2xl p-5 text-slate-600 font-bold">
+              No pending edit requests.
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {editRequests.map((plan) => (
+                <div
+                  key={plan.id}
+                  className="bg-yellow-50 border-2 border-yellow-200 rounded-[1.5rem] p-5"
+                >
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+                    <div>
+                      <h3 className="text-2xl font-black text-slate-900">
+                        {plan.fullName}
+                      </h3>
+
+                      <div className="flex flex-wrap gap-3 mt-3 text-sm">
+                        <span className="inline-flex items-center gap-1 bg-white border-2 border-yellow-200 px-3 py-1 rounded-full font-bold text-slate-700">
+                          <Hash size={14} />
+                          {plan.studentNumber}
+                        </span>
+
+                        <span className="inline-flex items-center gap-1 bg-white border-2 border-yellow-200 px-3 py-1 rounded-full font-bold text-slate-700">
+                          <CalendarDays size={14} />
+                          {plan.schoolYear || "No school years"}
+                        </span>
+
+                        <span className="inline-flex items-center gap-1 bg-white border-2 border-yellow-200 px-3 py-1 rounded-full font-bold text-yellow-800">
+                          Status: {plan.editRequestStatus || "PENDING"}
+                        </span>
+                      </div>
+
+                      <p className="text-sm text-slate-600 mt-4 font-semibold">
+                        Selected subjects: {getTotalSubjects(plan)} | Grade III
+                        hours: {getTotalGradeIiiHours(plan)} | Grade IV hours:{" "}
+                        {getTotalGradeIvHours(plan)}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <button
+                        onClick={() => approveEditRequest(plan.id)}
+                        className="inline-flex items-center justify-center gap-2 bg-green-600 text-white px-5 py-4 rounded-2xl font-black hover:bg-green-700 transition"
+                      >
+                        <CheckCircle size={18} />
+                        Approve
+                      </button>
+
+                      <button
+                        onClick={() => denyEditRequest(plan.id)}
+                        className="inline-flex items-center justify-center gap-2 bg-red-600 text-white px-5 py-4 rounded-2xl font-black hover:bg-red-700 transition"
+                      >
+                        <XCircle size={18} />
+                        Deny
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="bg-white border-4 border-blue-100 p-6 rounded-[2rem] shadow-xl mb-8">
@@ -374,6 +499,20 @@ export default function AdminDashboard() {
                             <CalendarDays size={14} />
                             {plan.schoolYear || "No school years"}
                           </span>
+
+                          <span
+                            className={`inline-flex items-center gap-1 border-2 px-3 py-1 rounded-full font-bold ${
+                              plan.editRequestStatus === "APPROVED"
+                                ? "bg-green-50 border-green-200 text-green-700"
+                                : plan.editRequestStatus === "PENDING"
+                                ? "bg-yellow-100 border-yellow-300 text-yellow-800"
+                                : plan.editRequestStatus === "DENIED"
+                                ? "bg-red-50 border-red-200 text-red-700"
+                                : "bg-slate-50 border-slate-200 text-slate-600"
+                            }`}
+                          >
+                            Edit: {plan.editRequestStatus || "NONE"}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -430,44 +569,29 @@ export default function AdminDashboard() {
                       </h3>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                        {plan.subjects?.map((subject) => {
-                          const chosenGrade =
-                            subject.selectedGrade ||
-                            (Number(subject.gradeIiiHours || 0) > 0
-                              ? "III"
-                              : "IV");
+                        {plan.subjects?.map((subject) => (
+                          <div
+                            key={
+                              subject.id ||
+                              `${subject.subject}-${subject.gradeIiiHours}-${subject.gradeIvHours}`
+                            }
+                            className="bg-white border-2 border-blue-100 rounded-2xl p-5 shadow-sm"
+                          >
+                            <p className="font-black text-slate-900">
+                              {subject.subject}
+                            </p>
 
-                          const chosenHours =
-                            chosenGrade === "III"
-                              ? subject.gradeIiiHours
-                              : subject.gradeIvHours;
+                            <div className="flex flex-wrap gap-2 mt-4">
+                              <span className="font-black px-3 py-2 rounded-xl bg-yellow-300 text-blue-950">
+                                Grade III: {subject.gradeIiiHours}h
+                              </span>
 
-                          return (
-                            <div
-                              key={
-                                subject.id ||
-                                `${subject.subject}-${subject.gradeIiiHours}-${subject.gradeIvHours}`
-                              }
-                              className="bg-white border-2 border-blue-100 rounded-2xl p-5 shadow-sm"
-                            >
-                              <p className="font-black text-slate-900">
-                                {subject.subject}
-                              </p>
-
-                              <div className="flex flex-wrap gap-2 mt-4">
-                                <span
-                                  className={`font-black px-3 py-2 rounded-xl ${
-                                    chosenGrade === "III"
-                                      ? "bg-yellow-300 text-blue-950"
-                                      : "bg-blue-600 text-white"
-                                  }`}
-                                >
-                                  Grade {chosenGrade}: {chosenHours}h
-                                </span>
-                              </div>
+                              <span className="font-black px-3 py-2 rounded-xl bg-blue-600 text-white">
+                                Grade IV: {subject.gradeIvHours}h
+                              </span>
                             </div>
-                          );
-                        })}
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
