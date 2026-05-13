@@ -327,10 +327,15 @@ function StudyPlanForm({ loggedInUser }) {
       console.error("Submit failed:", error);
 
       if (error.response?.data) {
-        alert(error.response.data);
-      } else {
-        alert("Could not submit study plan. Check backend connection.");
-      }
+  const message =
+    typeof error.response.data === "string"
+      ? error.response.data
+      : error.response.data.message || JSON.stringify(error.response.data);
+
+  alert(message);
+} else {
+  alert("Could not submit study plan. Check backend connection.");
+}
     }
   };
 
