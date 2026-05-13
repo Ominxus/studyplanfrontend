@@ -1826,14 +1826,28 @@ if (password !== registerData.confirmPassword) {
   className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
 />
 
-          <input
-            name="password"
-            type="password"
-            placeholder="Password"
-            value={registerData.password}
-            onChange={handleChange}
-            className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
-          />
+          <div>
+  <input
+    name="password"
+    type="password"
+    placeholder="Password"
+    value={registerData.password}
+    onChange={handleChange}
+    className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
+  />
+
+  <div className="mt-3 bg-blue-50 border-2 border-blue-100 rounded-2xl p-4">
+    <p className="text-sm font-black text-slate-700 mb-2">
+      Password requirements:
+    </p>
+
+    <ul className="text-xs font-bold text-slate-600 space-y-1">
+      <li>• At least 8 characters</li>
+      <li>• At least 1 capital letter</li>
+      <li>• At least 1 special character, for example ! @ # $ %</li>
+    </ul>
+  </div>
+</div>
 
           <input
             name="confirmPassword"
