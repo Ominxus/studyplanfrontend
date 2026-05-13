@@ -1606,7 +1606,10 @@ function LoginPage({ onLogin, onGoToRegister }) {
     e.preventDefault();
 
     try {
-      const response = await axios.post(`${AUTH_API}/login`, loginData);
+      const response = await axios.post(`${AUTH_API}/login`, {
+  username: loginData.username.trim(),
+  password: loginData.password
+});
 
       onLogin(response.data);
       setError("");
@@ -1662,12 +1665,18 @@ function LoginPage({ onLogin, onGoToRegister }) {
 
           <form onSubmit={handleLogin} className="space-y-6">
             <input
-              name="username"
-              placeholder="Username / Student number"
-              value={loginData.username}
-              onChange={handleChange}
-              className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
-            />
+  name="username"
+  placeholder="Username / Student number"
+  value={loginData.username}
+  maxLength={20}
+  onChange={(e) =>
+    setLoginData({
+      ...loginData,
+      username: e.target.value.replace(/\s/g, "")
+    })
+  }
+  className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
+/>
 
             <input
               name="password"
@@ -1717,26 +1726,58 @@ function RegisterPage({ onRegisterSuccess, onGoToLogin }) {
   const handleRegister = async (e) => {
     e.preventDefault();
 
-    if (!registerData.username.trim()) {
-      setError("Username is required");
-      return;
-    }
+    const username = registerData.username.trim();
+const password = registerData.password;
 
-    if (!registerData.password.trim()) {
-      setError("Password is required");
-      return;
-    }
+const usernameHasSpaces = /\s/.test(username);
+const passwordHasUppercase = /[A-Z]/.test(password);
+const passwordHasSpecialCharacter = /[^A-Za-z0-9]/.test(password);
 
-    if (registerData.password !== registerData.confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
+if (!username) {
+  setError("Username is required");
+  return;
+}
+
+if (usernameHasSpaces) {
+  setError("Username cannot contain spaces");
+  return;
+}
+
+if (username.length > 20) {
+  setError("Username cannot be more than 20 characters");
+  return;
+}
+
+if (!password.trim()) {
+  setError("Password is required");
+  return;
+}
+
+if (password.length < 8) {
+  setError("Password must be at least 8 characters long");
+  return;
+}
+
+if (!passwordHasUppercase) {
+  setError("Password must contain at least one capital letter");
+  return;
+}
+
+if (!passwordHasSpecialCharacter) {
+  setError("Password must contain at least one special character");
+  return;
+}
+
+if (password !== registerData.confirmPassword) {
+  setError("Passwords do not match");
+  return;
+}
 
     try {
       const response = await axios.post(`${AUTH_API}/register`, {
-        username: registerData.username,
-        password: registerData.password
-      });
+  username,
+  password
+});
 
       onRegisterSuccess(response.data);
       setError("");
@@ -1772,12 +1813,18 @@ function RegisterPage({ onRegisterSuccess, onGoToLogin }) {
 
         <form onSubmit={handleRegister} className="space-y-6">
           <input
-            name="username"
-            placeholder="Username / Student number"
-            value={registerData.username}
-            onChange={handleChange}
-            className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
-          />
+  name="username"
+  placeholder="Username / Student number"
+  value={registerData.username}
+  maxLength={20}
+  onChange={(e) =>
+    setRegisterData({
+      ...registerData,
+      username: e.target.value.replace(/\s/g, "")
+    })
+  }
+  className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
+/>
 
           <input
             name="password"
