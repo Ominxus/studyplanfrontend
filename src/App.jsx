@@ -51,6 +51,7 @@ function StudyPlanForm({ loggedInUser }) {
   const [studentInfo, setStudentInfo] = useState({
     fullName: "",
     studentNumber: studentNumberFromLogin,
+    classYear:"",
     schoolYear: ""
   });
 
@@ -91,6 +92,7 @@ function StudyPlanForm({ loggedInUser }) {
       setStudentInfo({
         fullName: existingPlanData?.fullName || "",
         studentNumber: studentNumberFromLogin,
+        classYear: existingPlanData?.classYear || "",
         schoolYear: existingPlanData?.schoolYear || ""
       });
 
@@ -276,6 +278,10 @@ function StudyPlanForm({ loggedInUser }) {
     formWarnings.push("Enter student number");
   }
 
+  if (!studentInfo.classYear.trim()) {
+  formWarnings.push("Enter class");
+}
+
   const completedRequiredCategories = requiredCategories.filter((cat) =>
     getCategoryStatus(cat).text.startsWith("Complete")
   ).length;
@@ -299,7 +305,7 @@ function StudyPlanForm({ loggedInUser }) {
       fullName: studentInfo.fullName,
       studentNumber: studentNumberFromLogin,
       schoolYear: studentInfo.schoolYear,
-      classYear: "",
+      classYear: studentInfo.classYear,
       subjects: subjects
         .filter((s) => s.selected)
         .map((s) => ({
@@ -394,7 +400,7 @@ function StudyPlanForm({ loggedInUser }) {
               Submitted Information
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
               <div className="bg-blue-50 border-2 border-blue-100 rounded-2xl p-5">
                 <p className="text-xs uppercase tracking-wide font-black text-slate-500">
                   Full Name
@@ -412,7 +418,14 @@ function StudyPlanForm({ loggedInUser }) {
                   {existingPlan.studentNumber}
                 </p>
               </div>
-
+              <div className="bg-blue-50 border-2 border-blue-100 rounded-2xl p-5">
+  <p className="text-xs uppercase tracking-wide font-black text-slate-500">
+    Class
+  </p>
+  <p className="text-lg font-black text-slate-900 mt-2">
+    {existingPlan.classYear || "Not provided"}
+  </p>
+</div>
               <div className="bg-blue-50 border-2 border-blue-100 rounded-2xl p-5">
                 <p className="text-xs uppercase tracking-wide font-black text-slate-500">
                   School Years
@@ -621,7 +634,7 @@ function StudyPlanForm({ loggedInUser }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <input
               name="fullName"
               placeholder="Full name"
@@ -637,7 +650,13 @@ function StudyPlanForm({ loggedInUser }) {
               readOnly
               className="w-full p-4 bg-slate-100 border-2 border-blue-100 rounded-2xl text-slate-700 cursor-not-allowed"
             />
-
+            <input
+  name="classYear"
+  placeholder="Class, e.g. IIIa or IVb"
+  value={studentInfo.classYear}
+  onChange={handleStudentChange}
+  className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white transition"
+/>
             <select
               name="schoolYear"
               value={studentInfo.schoolYear}

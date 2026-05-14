@@ -321,7 +321,9 @@ export default function AdminDashboard() {
                           <Hash size={14} />
                           {plan.studentNumber}
                         </span>
-
+                        <span className="inline-flex items-center gap-1 bg-white border-2 border-blue-100 px-3 py-1 rounded-full font-bold">
+  Class: {plan.classYear || "Not provided"}
+</span>
                         <span className="inline-flex items-center gap-1 bg-white border-2 border-yellow-200 px-3 py-1 rounded-full font-bold text-slate-700">
                           <CalendarDays size={14} />
                           {plan.schoolYear || "No school years"}
