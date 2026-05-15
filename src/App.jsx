@@ -26,6 +26,14 @@ const CONFIG_API = `${API_BASE_URL}/api/config`;
 const SCHOOL_YEARS_API = `${CONFIG_API}/school-years`;
 const AUTH_API = `${API_BASE_URL}/api/auth`;
 
+function setAuthToken(token) {
+  if (token) {
+    axios.defaults.headers.common.Authorization = `Bearer ${token}`;
+  } else {
+    delete axios.defaults.headers.common.Authorization;
+  }
+}
+
 function normalizeCategories(data) {
   return data.map((cat) => ({
     id: cat.id,
@@ -51,7 +59,7 @@ function StudyPlanForm({ loggedInUser }) {
   const [studentInfo, setStudentInfo] = useState({
     fullName: "",
     studentNumber: studentNumberFromLogin,
-    classYear:"",
+    classYear: "",
     schoolYear: ""
   });
 
@@ -160,7 +168,12 @@ function StudyPlanForm({ loggedInUser }) {
       console.error("Edit request failed:", error);
 
       if (error.response?.data) {
-        alert(error.response.data);
+        const message =
+          typeof error.response.data === "string"
+            ? error.response.data
+            : error.response.data.message || JSON.stringify(error.response.data);
+
+        alert(message);
       } else {
         alert("Could not request edit permission.");
       }
@@ -279,8 +292,8 @@ function StudyPlanForm({ loggedInUser }) {
   }
 
   if (!studentInfo.classYear.trim()) {
-  formWarnings.push("Enter class");
-}
+    formWarnings.push("Enter class");
+  }
 
   const completedRequiredCategories = requiredCategories.filter((cat) =>
     getCategoryStatus(cat).text.startsWith("Complete")
@@ -333,15 +346,15 @@ function StudyPlanForm({ loggedInUser }) {
       console.error("Submit failed:", error);
 
       if (error.response?.data) {
-  const message =
-    typeof error.response.data === "string"
-      ? error.response.data
-      : error.response.data.message || JSON.stringify(error.response.data);
+        const message =
+          typeof error.response.data === "string"
+            ? error.response.data
+            : error.response.data.message || JSON.stringify(error.response.data);
 
-  alert(message);
-} else {
-  alert("Could not submit study plan. Check backend connection.");
-}
+        alert(message);
+      } else {
+        alert("Could not submit study plan. Check backend connection.");
+      }
     }
   };
 
@@ -418,14 +431,16 @@ function StudyPlanForm({ loggedInUser }) {
                   {existingPlan.studentNumber}
                 </p>
               </div>
+
               <div className="bg-blue-50 border-2 border-blue-100 rounded-2xl p-5">
-  <p className="text-xs uppercase tracking-wide font-black text-slate-500">
-    Class
-  </p>
-  <p className="text-lg font-black text-slate-900 mt-2">
-    {existingPlan.classYear || "Not provided"}
-  </p>
-</div>
+                <p className="text-xs uppercase tracking-wide font-black text-slate-500">
+                  Class
+                </p>
+                <p className="text-lg font-black text-slate-900 mt-2">
+                  {existingPlan.classYear || "Not provided"}
+                </p>
+              </div>
+
               <div className="bg-blue-50 border-2 border-blue-100 rounded-2xl p-5">
                 <p className="text-xs uppercase tracking-wide font-black text-slate-500">
                   School Years
@@ -650,13 +665,15 @@ function StudyPlanForm({ loggedInUser }) {
               readOnly
               className="w-full p-4 bg-slate-100 border-2 border-blue-100 rounded-2xl text-slate-700 cursor-not-allowed"
             />
+
             <input
-  name="classYear"
-  placeholder="Class, e.g. IIIa or IVb"
-  value={studentInfo.classYear}
-  onChange={handleStudentChange}
-  className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white transition"
-/>
+              name="classYear"
+              placeholder="Class, e.g. IIIa or IVb"
+              value={studentInfo.classYear}
+              onChange={handleStudentChange}
+              className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white transition"
+            />
+
             <select
               name="schoolYear"
               value={studentInfo.schoolYear}
@@ -1531,9 +1548,7 @@ function ManageStudyPlanConfig() {
                       <input
                         type="number"
                         placeholder="III"
-                        value={
-                          newSubjectByCategory[cat.id]?.gradeIiiHours || ""
-                        }
+                        value={newSubjectByCategory[cat.id]?.gradeIiiHours || ""}
                         onChange={(e) =>
                           setNewSubjectByCategory({
                             ...newSubjectByCategory,
@@ -1626,14 +1641,26 @@ function LoginPage({ onLogin, onGoToRegister }) {
 
     try {
       const response = await axios.post(`${AUTH_API}/login`, {
-  username: loginData.username.trim(),
-  password: loginData.password
-});
+        username: loginData.username.trim(),
+        password: loginData.password
+      });
+
+      localStorage.setItem("loggedInUser", JSON.stringify(response.data));
+      setAuthToken(response.data.token);
 
       onLogin(response.data);
       setError("");
     } catch (err) {
-      setError("Invalid username or password");
+      if (err.response?.data) {
+        const message =
+          typeof err.response.data === "string"
+            ? err.response.data
+            : err.response.data.message || JSON.stringify(err.response.data);
+
+        setError(message);
+      } else {
+        setError("Invalid username or password");
+      }
     }
   };
 
@@ -1684,18 +1711,18 @@ function LoginPage({ onLogin, onGoToRegister }) {
 
           <form onSubmit={handleLogin} className="space-y-6">
             <input
-  name="username"
-  placeholder="Username / Student number"
-  value={loginData.username}
-  maxLength={20}
-  onChange={(e) =>
-    setLoginData({
-      ...loginData,
-      username: e.target.value.replace(/\s/g, "")
-    })
-  }
-  className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
-/>
+              name="username"
+              placeholder="Username / Student number"
+              value={loginData.username}
+              maxLength={20}
+              onChange={(e) =>
+                setLoginData({
+                  ...loginData,
+                  username: e.target.value.replace(/\s/g, "")
+                })
+              }
+              className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
+            />
 
             <input
               name="password"
@@ -1746,63 +1773,71 @@ function RegisterPage({ onRegisterSuccess, onGoToLogin }) {
     e.preventDefault();
 
     const username = registerData.username.trim();
-const password = registerData.password;
+    const password = registerData.password;
 
-const usernameHasSpaces = /\s/.test(username);
-const passwordHasUppercase = /[A-Z]/.test(password);
-const passwordHasSpecialCharacter = /[^A-Za-z0-9]/.test(password);
+    const usernameHasSpaces = /\s/.test(username);
+    const passwordHasUppercase = /[A-Z]/.test(password);
+    const passwordHasSpecialCharacter = /[^A-Za-z0-9]/.test(password);
 
-if (!username) {
-  setError("Username is required");
-  return;
-}
+    if (!username) {
+      setError("Username is required");
+      return;
+    }
 
-if (usernameHasSpaces) {
-  setError("Username cannot contain spaces");
-  return;
-}
+    if (usernameHasSpaces) {
+      setError("Username cannot contain spaces");
+      return;
+    }
 
-if (username.length > 20) {
-  setError("Username cannot be more than 20 characters");
-  return;
-}
+    if (username.length > 20) {
+      setError("Username cannot be more than 20 characters");
+      return;
+    }
 
-if (!password.trim()) {
-  setError("Password is required");
-  return;
-}
+    if (!password.trim()) {
+      setError("Password is required");
+      return;
+    }
 
-if (password.length < 8) {
-  setError("Password must be at least 8 characters long");
-  return;
-}
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long");
+      return;
+    }
 
-if (!passwordHasUppercase) {
-  setError("Password must contain at least one capital letter");
-  return;
-}
+    if (!passwordHasUppercase) {
+      setError("Password must contain at least one capital letter");
+      return;
+    }
 
-if (!passwordHasSpecialCharacter) {
-  setError("Password must contain at least one special character");
-  return;
-}
+    if (!passwordHasSpecialCharacter) {
+      setError("Password must contain at least one special character");
+      return;
+    }
 
-if (password !== registerData.confirmPassword) {
-  setError("Passwords do not match");
-  return;
-}
+    if (password !== registerData.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
 
     try {
       const response = await axios.post(`${AUTH_API}/register`, {
-  username,
-  password
-});
+        username,
+        password
+      });
+
+      localStorage.setItem("loggedInUser", JSON.stringify(response.data));
+      setAuthToken(response.data.token);
 
       onRegisterSuccess(response.data);
       setError("");
     } catch (err) {
-      if (err.response) {
-        setError(err.response.data);
+      if (err.response?.data) {
+        const message =
+          typeof err.response.data === "string"
+            ? err.response.data
+            : err.response.data.message || JSON.stringify(err.response.data);
+
+        setError(message);
       } else {
         setError("Could not connect to backend");
       }
@@ -1832,41 +1867,41 @@ if (password !== registerData.confirmPassword) {
 
         <form onSubmit={handleRegister} className="space-y-6">
           <input
-  name="username"
-  placeholder="Username / Student number"
-  value={registerData.username}
-  maxLength={20}
-  onChange={(e) =>
-    setRegisterData({
-      ...registerData,
-      username: e.target.value.replace(/\s/g, "")
-    })
-  }
-  className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
-/>
+            name="username"
+            placeholder="Username / Student number"
+            value={registerData.username}
+            maxLength={20}
+            onChange={(e) =>
+              setRegisterData({
+                ...registerData,
+                username: e.target.value.replace(/\s/g, "")
+              })
+            }
+            className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
+          />
 
           <div>
-  <input
-    name="password"
-    type="password"
-    placeholder="Password"
-    value={registerData.password}
-    onChange={handleChange}
-    className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
-  />
+            <input
+              name="password"
+              type="password"
+              placeholder="Password"
+              value={registerData.password}
+              onChange={handleChange}
+              className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
+            />
 
-  <div className="mt-3 bg-blue-50 border-2 border-blue-100 rounded-2xl p-4">
-    <p className="text-sm font-black text-slate-700 mb-2">
-      Password requirements:
-    </p>
+            <div className="mt-3 bg-blue-50 border-2 border-blue-100 rounded-2xl p-4">
+              <p className="text-sm font-black text-slate-700 mb-2">
+                Password requirements:
+              </p>
 
-    <ul className="text-xs font-bold text-slate-600 space-y-1">
-      <li>• At least 8 characters</li>
-      <li>• At least 1 capital letter</li>
-      <li>• At least 1 special character, for example ! @ # $ %</li>
-    </ul>
-  </div>
-</div>
+              <ul className="text-xs font-bold text-slate-600 space-y-1">
+                <li>• At least 8 characters</li>
+                <li>• At least 1 capital letter</li>
+                <li>• At least 1 special character, for example ! @ # $ %</li>
+              </ul>
+            </div>
+          </div>
 
           <input
             name="confirmPassword"
@@ -1897,7 +1932,25 @@ if (password !== registerData.confirmPassword) {
 }
 
 export default function App() {
-  const [loggedInUser, setLoggedInUser] = useState(null);
+  const [loggedInUser, setLoggedInUser] = useState(() => {
+    const savedUser = localStorage.getItem("loggedInUser");
+
+    if (!savedUser) return null;
+
+    try {
+      const parsedUser = JSON.parse(savedUser);
+
+      if (parsedUser?.token) {
+        setAuthToken(parsedUser.token);
+      }
+
+      return parsedUser;
+    } catch {
+      localStorage.removeItem("loggedInUser");
+      return null;
+    }
+  });
+
   const [authPage, setAuthPage] = useState("login");
   const [adminPage, setAdminPage] = useState("dashboard");
 
@@ -1978,6 +2031,8 @@ export default function App() {
 
             <button
               onClick={() => {
+                localStorage.removeItem("loggedInUser");
+                setAuthToken(null);
                 setLoggedInUser(null);
                 setAuthPage("login");
                 setAdminPage("dashboard");

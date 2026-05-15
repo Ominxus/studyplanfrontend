@@ -59,8 +59,30 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleExport = () => {
-    window.open(`${API_BASE_URL}/export`, "_blank");
+  const handleExport = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/export`, {
+        responseType: "blob"
+      });
+
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = "studyplans.xlsx";
+      document.body.appendChild(link);
+      link.click();
+
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Export failed:", error);
+      alert("Could not export Excel file.");
+    }
   };
 
   const getTotalSubjects = (plan) => plan.subjects?.length || 0;
@@ -87,7 +109,8 @@ export default function AdminDashboard() {
 
     const matchesSearch =
       plan.fullName?.toLowerCase().includes(searchText) ||
-      plan.studentNumber?.toLowerCase().includes(searchText);
+      plan.studentNumber?.toLowerCase().includes(searchText) ||
+      plan.classYear?.toLowerCase().includes(searchText);
 
     const matchesSchoolYear =
       schoolYearFilter === "All" || plan.schoolYear === schoolYearFilter;
@@ -173,7 +196,12 @@ export default function AdminDashboard() {
       console.error("Approve failed:", error);
 
       if (error.response?.data) {
-        alert(error.response.data);
+        const message =
+          typeof error.response.data === "string"
+            ? error.response.data
+            : error.response.data.message || JSON.stringify(error.response.data);
+
+        alert(message);
       } else {
         alert("Could not approve edit request.");
       }
@@ -191,7 +219,12 @@ export default function AdminDashboard() {
       console.error("Deny failed:", error);
 
       if (error.response?.data) {
-        alert(error.response.data);
+        const message =
+          typeof error.response.data === "string"
+            ? error.response.data
+            : error.response.data.message || JSON.stringify(error.response.data);
+
+        alert(message);
       } else {
         alert("Could not deny edit request.");
       }
@@ -321,9 +354,11 @@ export default function AdminDashboard() {
                           <Hash size={14} />
                           {plan.studentNumber}
                         </span>
+
                         <span className="inline-flex items-center gap-1 bg-white border-2 border-blue-100 px-3 py-1 rounded-full font-bold">
-  Class: {plan.classYear || "Not provided"}
-</span>
+                          Class: {plan.classYear || "Not provided"}
+                        </span>
+
                         <span className="inline-flex items-center gap-1 bg-white border-2 border-yellow-200 px-3 py-1 rounded-full font-bold text-slate-700">
                           <CalendarDays size={14} />
                           {plan.schoolYear || "No school years"}
@@ -376,7 +411,7 @@ export default function AdminDashboard() {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name or student number"
+                placeholder="Search by name, student number, or class"
                 className="w-full pl-12 pr-4 py-4 border-2 border-blue-100 rounded-2xl bg-blue-50 focus:bg-white focus:outline-none focus:border-blue-500 transition"
               />
             </div>
@@ -495,6 +530,10 @@ export default function AdminDashboard() {
                           <span className="inline-flex items-center gap-1 bg-yellow-100 border-2 border-yellow-200 px-3 py-1 rounded-full font-bold">
                             <Hash size={14} />
                             {plan.studentNumber}
+                          </span>
+
+                          <span className="inline-flex items-center gap-1 bg-white border-2 border-blue-100 px-3 py-1 rounded-full font-bold">
+                            Class: {plan.classYear || "Not provided"}
                           </span>
 
                           <span className="inline-flex items-center gap-1 bg-blue-50 border-2 border-blue-100 px-3 py-1 rounded-full font-bold">
