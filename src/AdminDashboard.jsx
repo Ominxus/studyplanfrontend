@@ -16,23 +16,18 @@ import {
   CheckSquare,
   CheckCircle,
   XCircle,
-  Edit3,
-  ClipboardList,
-  ShieldCheck
+  Edit3
 } from "lucide-react";
 
 const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/api/studyplans`;
-const AUDIT_LOGS_API = `${import.meta.env.VITE_API_BASE_URL}/api/audit-logs`;
 
 export default function AdminDashboard() {
   const [plans, setPlans] = useState([]);
   const [editRequests, setEditRequests] = useState([]);
-  const [auditLogs, setAuditLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const [auditSearch, setAuditSearch] = useState("");
   const [schoolYearFilter, setSchoolYearFilter] = useState("All");
   const [expandedPlanId, setExpandedPlanId] = useState(null);
   const [selectedPlanIds, setSelectedPlanIds] = useState([]);
@@ -46,16 +41,13 @@ export default function AdminDashboard() {
       setLoading(true);
       setRefreshing(true);
 
-      const [plansResponse, editRequestsResponse, auditLogsResponse] =
-        await Promise.all([
-          axios.get(API_BASE_URL),
-          axios.get(`${API_BASE_URL}/edit-requests`),
-          axios.get(AUDIT_LOGS_API)
-        ]);
+      const [plansResponse, editRequestsResponse] = await Promise.all([
+        axios.get(API_BASE_URL),
+        axios.get(`${API_BASE_URL}/edit-requests`)
+      ]);
 
       setPlans(plansResponse.data || []);
       setEditRequests(editRequestsResponse.data || []);
-      setAuditLogs(auditLogsResponse.data || []);
       setSelectedPlanIds([]);
       setError("");
     } catch (err) {
@@ -95,25 +87,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const formatDateTime = (value) => {
-    if (!value) return "Unknown time";
-
-    try {
-      return new Date(value).toLocaleString();
-    } catch {
-      return value;
-    }
-  };
-
-  const getActionLabel = (action) => {
-    if (!action) return "UNKNOWN";
-
-    return action
-      .replaceAll("_", " ")
-      .toLowerCase()
-      .replace(/\b\w/g, (char) => char.toUpperCase());
-  };
-
   const getTotalSubjects = (plan) => plan.subjects?.length || 0;
 
   const getTotalGradeIiiHours = (plan) =>
@@ -145,17 +118,6 @@ export default function AdminDashboard() {
       schoolYearFilter === "All" || plan.schoolYear === schoolYearFilter;
 
     return matchesSearch && matchesSchoolYear;
-  });
-
-  const filteredAuditLogs = auditLogs.filter((log) => {
-    const searchText = auditSearch.toLowerCase();
-
-    return (
-      log.username?.toLowerCase().includes(searchText) ||
-      log.role?.toLowerCase().includes(searchText) ||
-      log.action?.toLowerCase().includes(searchText) ||
-      log.details?.toLowerCase().includes(searchText)
-    );
   });
 
   const totalStudents = filteredPlans.length;
@@ -290,9 +252,8 @@ export default function AdminDashboard() {
               </h1>
 
               <p className="text-blue-50 mt-6 max-w-2xl text-lg">
-                View submitted study plans, manage edit requests, monitor audit
-                logs, manage student submissions, and export everything to
-                Excel.
+                View submitted study plans, manage edit requests, manage
+                student submissions, and export everything to Excel.
               </p>
             </div>
 
@@ -319,7 +280,7 @@ export default function AdminDashboard() {
           </div>
         </section>
 
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-5 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-5 mb-8">
           <div className="bg-white border-4 border-blue-100 p-6 rounded-[2rem] shadow-xl">
             <p className="text-sm text-slate-500 font-black">Students</p>
             <h2 className="text-5xl font-black text-blue-700">
@@ -352,13 +313,6 @@ export default function AdminDashboard() {
             <p className="text-sm text-slate-500 font-black">Edit Requests</p>
             <h2 className="text-5xl font-black text-yellow-700">
               {editRequests.length}
-            </h2>
-          </div>
-
-          <div className="bg-white border-4 border-blue-300 p-6 rounded-[2rem] shadow-xl">
-            <p className="text-sm text-slate-500 font-black">Audit Logs</p>
-            <h2 className="text-5xl font-black text-blue-700">
-              {auditLogs.length}
             </h2>
           </div>
         </div>
@@ -444,93 +398,6 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               ))}
-            </div>
-          )}
-        </div>
-
-        <div className="bg-white border-4 border-blue-300 p-6 md:p-8 rounded-[2rem] shadow-xl mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 mb-6">
-            <div className="flex items-center gap-4">
-              <div className="bg-blue-600 text-white p-3 rounded-2xl">
-                <ClipboardList size={24} />
-              </div>
-
-              <div>
-                <h2 className="text-3xl font-black text-slate-900">
-                  Audit Logs
-                </h2>
-                <p className="text-sm text-slate-500 mt-1">
-                  Security history of important admin actions.
-                </p>
-              </div>
-            </div>
-
-            <div className="relative w-full lg:w-96">
-              <Search
-                size={20}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500"
-              />
-
-              <input
-                value={auditSearch}
-                onChange={(e) => setAuditSearch(e.target.value)}
-                placeholder="Search audit logs"
-                className="w-full pl-12 pr-4 py-4 border-2 border-blue-100 rounded-2xl bg-blue-50 focus:bg-white focus:outline-none focus:border-blue-500 transition"
-              />
-            </div>
-          </div>
-
-          {filteredAuditLogs.length === 0 ? (
-            <div className="bg-blue-50 border-2 border-blue-100 rounded-2xl p-5 text-slate-600 font-bold">
-              No audit logs found.
-            </div>
-          ) : (
-            <div className="overflow-x-auto rounded-[1.5rem] border-2 border-blue-100">
-              <table className="w-full text-sm">
-                <thead className="bg-blue-600 text-white uppercase text-xs tracking-wide">
-                  <tr>
-                    <th className="p-4 text-left">Time</th>
-                    <th className="p-4 text-left">User</th>
-                    <th className="p-4 text-center">Role</th>
-                    <th className="p-4 text-left">Action</th>
-                    <th className="p-4 text-left">Details</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {filteredAuditLogs.map((log) => (
-                    <tr
-                      key={log.id}
-                      className="border-b-2 border-blue-50 bg-white hover:bg-blue-50 transition"
-                    >
-                      <td className="p-4 font-bold text-slate-700 whitespace-nowrap">
-                        {formatDateTime(log.createdAt)}
-                      </td>
-
-                      <td className="p-4">
-                        <span className="inline-flex items-center gap-2 bg-yellow-100 border-2 border-yellow-200 px-3 py-1 rounded-full font-black text-slate-800">
-                          <ShieldCheck size={14} />
-                          {log.username || "Unknown"}
-                        </span>
-                      </td>
-
-                      <td className="p-4 text-center">
-                        <span className="inline-flex items-center justify-center bg-blue-100 border-2 border-blue-200 text-blue-700 px-3 py-1 rounded-full font-black">
-                          {log.role || "UNKNOWN"}
-                        </span>
-                      </td>
-
-                      <td className="p-4 font-black text-slate-900 whitespace-nowrap">
-                        {getActionLabel(log.action)}
-                      </td>
-
-                      <td className="p-4 font-semibold text-slate-600 min-w-[320px]">
-                        {log.details || "No details"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
           )}
         </div>

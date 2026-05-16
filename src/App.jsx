@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import AdminDashboard from "./AdminDashboard";
+import AuditLogs from "./AuditLogs";
 import {
   GraduationCap,
   AlertTriangle,
@@ -2017,6 +2018,16 @@ export default function App() {
                 >
                   Manage Study Plan
                 </button>
+                <button
+  onClick={() => setAdminPage("audit")}
+  className={`px-5 py-3 rounded-xl font-black transition ${
+    adminPage === "audit"
+      ? "bg-blue-600 text-white shadow"
+      : "text-blue-700 hover:bg-white"
+  }`}
+>
+  Audit Logs
+</button>
               </div>
             )}
 
@@ -2047,14 +2058,16 @@ export default function App() {
       </nav>
 
       {loggedInUser.role === "ADMIN" ? (
-        adminPage === "dashboard" ? (
-          <AdminDashboard />
-        ) : (
-          <ManageStudyPlanConfig />
-        )
-      ) : (
-        <StudyPlanForm loggedInUser={loggedInUser} />
-      )}
+  adminPage === "dashboard" ? (
+    <AdminDashboard />
+  ) : adminPage === "manage" ? (
+    <ManageStudyPlanConfig />
+  ) : (
+    <AuditLogs />
+  )
+) : (
+  <StudyPlanForm loggedInUser={loggedInUser} />
+)}
     </div>
   );
 }
