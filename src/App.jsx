@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import AdminDashboard from "./AdminDashboard";
 import AuditLogs from "./AuditLogs";
+import MaintenancePage from "./MaintenancePage";
+import MaintenanceSettings from "./MaintenanceSettings";
 import {
   GraduationCap,
   AlertTriangle,
@@ -26,6 +28,7 @@ const STUDY_PLAN_API = `${API_BASE_URL}/api/studyplans`;
 const CONFIG_API = `${API_BASE_URL}/api/config`;
 const SCHOOL_YEARS_API = `${CONFIG_API}/school-years`;
 const AUTH_API = `${API_BASE_URL}/api/auth`;
+const MAINTENANCE_API = `${API_BASE_URL}/api/maintenance/status`;
 
 function setAuthToken(token) {
   if (token) {
@@ -46,6 +49,16 @@ function normalizeCategories(data) {
   }));
 }
 
+function getErrorMessage(error, fallback) {
+  if (error.response?.data) {
+    return typeof error.response.data === "string"
+      ? error.response.data
+      : error.response.data.message || JSON.stringify(error.response.data);
+  }
+
+  return fallback;
+}
+
 function StudyPlanForm({ loggedInUser }) {
   const [categories, setCategories] = useState([]);
   const [schoolYears, setSchoolYears] = useState([]);
@@ -54,7 +67,6 @@ function StudyPlanForm({ loggedInUser }) {
   const [configError, setConfigError] = useState("");
 
   const studentNumberFromLogin = loggedInUser?.username || "";
-
   const [existingPlan, setExistingPlan] = useState(null);
 
   const [studentInfo, setStudentInfo] = useState({
@@ -113,7 +125,6 @@ function StudyPlanForm({ loggedInUser }) {
         normalized.flatMap((cat) =>
           (cat.subjects || []).map((sub) => {
             let autoGroup = sub.groupName || null;
-
             const subjectName = sub.name.toLowerCase();
 
             if (subjectName.includes("matematika")) {
@@ -167,17 +178,7 @@ function StudyPlanForm({ loggedInUser }) {
       fetchConfig();
     } catch (error) {
       console.error("Edit request failed:", error);
-
-      if (error.response?.data) {
-        const message =
-          typeof error.response.data === "string"
-            ? error.response.data
-            : error.response.data.message || JSON.stringify(error.response.data);
-
-        alert(message);
-      } else {
-        alert("Could not request edit permission.");
-      }
+      alert(getErrorMessage(error, "Could not request edit permission."));
     }
   };
 
@@ -345,17 +346,7 @@ function StudyPlanForm({ loggedInUser }) {
       fetchConfig();
     } catch (error) {
       console.error("Submit failed:", error);
-
-      if (error.response?.data) {
-        const message =
-          typeof error.response.data === "string"
-            ? error.response.data
-            : error.response.data.message || JSON.stringify(error.response.data);
-
-        alert(message);
-      } else {
-        alert("Could not submit study plan. Check backend connection.");
-      }
+      alert(getErrorMessage(error, "Could not submit study plan. Check backend connection."));
     }
   };
 
@@ -1646,22 +1637,17 @@ function LoginPage({ onLogin, onGoToRegister }) {
         password: loginData.password
       });
 
-      localStorage.setItem("loggedInUser", JSON.stringify(response.data));
-      setAuthToken(response.data.token);
+      const userData = response.data;
 
-      onLogin(response.data);
+      if (userData?.token) {
+        setAuthToken(userData.token);
+      }
+
+      localStorage.setItem("loggedInUser", JSON.stringify(userData));
+      onLogin(userData);
       setError("");
     } catch (err) {
-      if (err.response?.data) {
-        const message =
-          typeof err.response.data === "string"
-            ? err.response.data
-            : err.response.data.message || JSON.stringify(err.response.data);
-
-        setError(message);
-      } else {
-        setError("Invalid username or password");
-      }
+      setError("Invalid username or password");
     }
   };
 
@@ -1826,19 +1812,22 @@ function RegisterPage({ onRegisterSuccess, onGoToLogin }) {
         password
       });
 
-      localStorage.setItem("loggedInUser", JSON.stringify(response.data));
-      setAuthToken(response.data.token);
+      const userData = response.data;
 
-      onRegisterSuccess(response.data);
+      if (userData?.token) {
+        setAuthToken(userData.token);
+      }
+
+      localStorage.setItem("loggedInUser", JSON.stringify(userData));
+      onRegisterSuccess(userData);
       setError("");
     } catch (err) {
-      if (err.response?.data) {
-        const message =
+      if (err.response) {
+        setError(
           typeof err.response.data === "string"
             ? err.response.data
-            : err.response.data.message || JSON.stringify(err.response.data);
-
-        setError(message);
+            : err.response.data.message || JSON.stringify(err.response.data)
+        );
       } else {
         setError("Could not connect to backend");
       }
@@ -1952,8 +1941,29 @@ export default function App() {
     }
   });
 
+  const [maintenanceStatus, setMaintenanceStatus] = useState(null);
+  const [maintenanceLoading, setMaintenanceLoading] = useState(false);
   const [authPage, setAuthPage] = useState("login");
   const [adminPage, setAdminPage] = useState("dashboard");
+
+  const fetchMaintenanceStatus = async () => {
+    if (!loggedInUser) return;
+
+    try {
+      setMaintenanceLoading(true);
+
+      const response = await axios.get(MAINTENANCE_API);
+      setMaintenanceStatus(response.data);
+    } catch (error) {
+      console.error("Could not load maintenance status:", error);
+    } finally {
+      setMaintenanceLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMaintenanceStatus();
+  }, [loggedInUser]);
 
   if (!loggedInUser && authPage === "login") {
     return (
@@ -1996,7 +2006,7 @@ export default function App() {
 
           <div className="flex flex-wrap items-center gap-4">
             {loggedInUser.role === "ADMIN" && (
-              <div className="flex bg-blue-50 border-2 border-blue-100 rounded-2xl p-1">
+              <div className="flex flex-wrap bg-blue-50 border-2 border-blue-100 rounded-2xl p-1">
                 <button
                   onClick={() => setAdminPage("dashboard")}
                   className={`px-5 py-3 rounded-xl font-black transition ${
@@ -2018,16 +2028,28 @@ export default function App() {
                 >
                   Manage Study Plan
                 </button>
+
                 <button
-  onClick={() => setAdminPage("audit")}
-  className={`px-5 py-3 rounded-xl font-black transition ${
-    adminPage === "audit"
-      ? "bg-blue-600 text-white shadow"
-      : "text-blue-700 hover:bg-white"
-  }`}
->
-  Audit Logs
-</button>
+                  onClick={() => setAdminPage("audit")}
+                  className={`px-5 py-3 rounded-xl font-black transition ${
+                    adminPage === "audit"
+                      ? "bg-blue-600 text-white shadow"
+                      : "text-blue-700 hover:bg-white"
+                  }`}
+                >
+                  Audit Logs
+                </button>
+
+                <button
+                  onClick={() => setAdminPage("maintenance")}
+                  className={`px-5 py-3 rounded-xl font-black transition ${
+                    adminPage === "maintenance"
+                      ? "bg-blue-600 text-white shadow"
+                      : "text-blue-700 hover:bg-white"
+                  }`}
+                >
+                  Maintenance
+                </button>
               </div>
             )}
 
@@ -2045,6 +2067,7 @@ export default function App() {
                 localStorage.removeItem("loggedInUser");
                 setAuthToken(null);
                 setLoggedInUser(null);
+                setMaintenanceStatus(null);
                 setAuthPage("login");
                 setAdminPage("dashboard");
               }}
@@ -2058,16 +2081,31 @@ export default function App() {
       </nav>
 
       {loggedInUser.role === "ADMIN" ? (
-  adminPage === "dashboard" ? (
-    <AdminDashboard />
-  ) : adminPage === "manage" ? (
-    <ManageStudyPlanConfig />
-  ) : (
-    <AuditLogs />
-  )
-) : (
-  <StudyPlanForm loggedInUser={loggedInUser} />
-)}
+        adminPage === "dashboard" ? (
+          <AdminDashboard />
+        ) : adminPage === "manage" ? (
+          <ManageStudyPlanConfig />
+        ) : adminPage === "audit" ? (
+          <AuditLogs />
+        ) : (
+          <MaintenanceSettings
+            maintenanceStatus={maintenanceStatus}
+            onRefresh={fetchMaintenanceStatus}
+          />
+        )
+      ) : maintenanceStatus?.enabled ? (
+        <MaintenancePage status={maintenanceStatus} />
+      ) : maintenanceLoading ? (
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-yellow-100 flex items-center justify-center p-8">
+          <div className="bg-white border-4 border-blue-200 p-10 rounded-[2rem] shadow-2xl text-center">
+            <p className="font-black text-slate-900">
+              Checking maintenance status...
+            </p>
+          </div>
+        </div>
+      ) : (
+        <StudyPlanForm loggedInUser={loggedInUser} />
+      )}
     </div>
   );
 }
