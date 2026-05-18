@@ -59,6 +59,373 @@ function getErrorMessage(error, fallback) {
   return fallback;
 }
 
+
+
+const TEXT_TRANSLATIONS = {
+  "Study Plan System": "Individualaus ugdymo plano sistema",
+  "Student Portal": "Mokinio portalas",
+  "Admin Portal": "Administratoriaus portalas",
+  "Admin Mode": "Administratoriaus režimas",
+  "Dashboard.": "Valdymo skydelis.",
+  "Dashboard": "Valdymo skydelis",
+  "Manage Study Plan": "Tvarkyti ugdymo planą",
+  "Audit Logs": "Veiksmų žurnalas",
+  "Maintenance": "Priežiūra",
+  "Maintenance Mode.": "Priežiūros režimas.",
+  "Admin Maintenance Control": "Administratoriaus priežiūros valdymas",
+  "Security Records": "Saugumo įrašai",
+  "Audit Logs.": "Veiksmų žurnalas.",
+  "Security History": "Saugumo istorija",
+  "Student Study Portal": "Mokinio ugdymo plano portalas",
+  "Choose your two-year study plan.": "Pasirinkite dvejų metų ugdymo planą.",
+  "Update your approved study plan.": "Atnaujinkite patvirtintą ugdymo planą.",
+  "Select a subject once and the Grade III and Grade IV hours will be added automatically.": "Pasirinkite dalyką vieną kartą, o III ir IV gimnazijos klasės valandos bus pridėtos automatiškai.",
+  "Your edit request was approved. Update your subjects and submit again.": "Jūsų redagavimo prašymas patvirtintas. Atnaujinkite dalykus ir pateikite dar kartą.",
+  "Live Summary": "Santrauka",
+  "Subjects": "Dalykai",
+  "Total Hours": "Iš viso valandų",
+  "Grade III": "III gimnazijos klasė",
+  "Grade IV": "IV gimnazijos klasė",
+  "Completion": "Užbaigimas",
+  "Student Information": "Mokinio informacija",
+  "Fill this in before choosing subjects.": "Užpildykite prieš pasirinkdami dalykus.",
+  "Full name": "Vardas ir pavardė",
+  "Student number": "Mokinio numeris",
+  "Username / Student number": "Vartotojo vardas / mokinio numeris",
+  "Class, e.g. IIIa or IVb": "Klasė, pvz., IIIa arba IVb",
+  "Select school years": "Pasirinkite mokslo metus",
+  "School Years": "Mokslo metai",
+  "Class": "Klasė",
+  "Almost there 👀": "Beveik baigta 👀",
+  "All requirements are complete. You’re ready to submit 🚀": "Visi reikalavimai įvykdyti. Galite pateikti 🚀",
+  "Complete Requirements First": "Pirmiausia įvykdykite reikalavimus",
+  "Submit Study Plan 🚀": "Pateikti ugdymo planą 🚀",
+  "Update Study Plan 🚀": "Atnaujinti ugdymo planą 🚀",
+  "Select": "Pasirinkti",
+  "Subject": "Dalykas",
+  "Grade III Hours": "III klasės valandos",
+  "Grade IV Hours": "IV klasės valandos",
+  "Only one option from this group can be selected.": "Iš šios grupės galima pasirinkti tik vieną variantą.",
+  "Group option already selected": "Šios grupės variantas jau pasirinktas",
+  "Required": "Privaloma",
+  "Optional category": "Pasirenkama kategorija",
+  "Optional": "Pasirenkama",
+  "Too many": "Per daug",
+  "Submitted Study Plan": "Pateiktas ugdymo planas",
+  "Your study plan has already been submitted.": "Jūsų ugdymo planas jau pateiktas.",
+  "You can only edit this study plan if an admin approves your edit request.": "Šį ugdymo planą galite redaguoti tik tada, kai administratorius patvirtins redagavimo prašymą.",
+  "Submitted Information": "Pateikta informacija",
+  "Selected Subjects": "Pasirinkti dalykai",
+  "Edit Status:": "Redagavimo būsena:",
+  "Your edit request is waiting for admin approval.": "Jūsų redagavimo prašymas laukia administratoriaus patvirtinimo.",
+  "Your last edit request was denied. You may request again if needed.": "Paskutinis redagavimo prašymas buvo atmestas. Jei reikia, galite prašyti dar kartą.",
+  "Request Permission to Edit": "Prašyti leidimo redaguoti",
+  "Edit Request Pending": "Redagavimo prašymas laukia",
+  "Admin approved your edit request. After you submit the update, editing will be locked again.": "Administratorius patvirtino jūsų redagavimo prašymą. Pateikus atnaujinimą, redagavimas vėl bus užrakintas.",
+  "Loading study plan configuration...": "Įkeliama ugdymo plano konfigūracija...",
+  "Could not load study plan configuration.": "Nepavyko įkelti ugdymo plano konfigūracijos.",
+  "Try Again": "Bandyti dar kartą",
+  "Welcome back": "Sveiki sugrįžę",
+  "Login": "Prisijungti",
+  "Enter your credentials to continue.": "Įveskite prisijungimo duomenis, kad tęstumėte.",
+  "Invalid username or password": "Neteisingas vartotojo vardas arba slaptažodis",
+  "Password": "Slaptažodis",
+  "Don't have an account?": "Neturite paskyros?",
+  "Register": "Registruotis",
+  "Already have an account?": "Jau turite paskyrą?",
+  "Use your student number as your username.": "Naudokite mokinio numerį kaip vartotojo vardą.",
+  "Confirm Password": "Pakartokite slaptažodį",
+  "Password requirements:": "Slaptažodžio reikalavimai:",
+  "• At least 8 characters": "• Bent 8 simboliai",
+  "• At least 1 capital letter": "• Bent 1 didžioji raidė",
+  "• At least 1 special character, for example ! @ # $ %": "• Bent 1 specialusis simbolis, pvz., ! @ # $ %",
+  "Student and admin access": "Mokinio ir administratoriaus prieiga",
+  "A fresh student portal for choosing subjects and managing study plans.": "Mokinių portalas dalykų pasirinkimui ir ugdymo planų valdymui.",
+  "Manage study plans.": "Tvarkyti ugdymo planus.",
+  "Admin Control Panel": "Administratoriaus valdymo skydelis",
+  "Edit school years, categories, selection rules, subjects, and Grade III / Grade IV hour values.": "Redaguokite mokslo metus, kategorijas, pasirinkimo taisykles, dalykus ir III / IV klasės valandas.",
+  "Manage School Years": "Tvarkyti mokslo metus",
+  "Add or edit the school year options students can choose.": "Pridėkite arba redaguokite mokinių pasirenkamus mokslo metus.",
+  "Example: 2026–2028": "Pvz.: 2026–2028",
+  "Add Year": "Pridėti metus",
+  "No school year options added yet.": "Mokslo metų pasirinkimų dar nėra.",
+  "Save": "Išsaugoti",
+  "Delete": "Ištrinti",
+  "Add New Category": "Pridėti naują kategoriją",
+  "Create a new subject category and define its rules.": "Sukurkite naują dalykų kategoriją ir nustatykite jos taisykles.",
+  "Category Name": "Kategorijos pavadinimas",
+  "Example: Privalomi dalykai": "Pvz.: Privalomi dalykai",
+  "Min": "Min.",
+  "Max": "Maks.",
+  "Add Category": "Pridėti kategoriją",
+  "Category Settings": "Kategorijos nustatymai",
+  "Edit category name and selection limits.": "Redaguokite kategorijos pavadinimą ir pasirinkimo ribas.",
+  "Subject Name": "Dalyko pavadinimas",
+  "Group": "Grupė",
+  "Update": "Atnaujinti",
+  "Remove": "Pašalinti",
+  "No subjects in this category yet.": "Šioje kategorijoje dar nėra dalykų.",
+  "Add New Subject": "Pridėti naują dalyką",
+  "New subject name": "Naujo dalyko pavadinimas",
+  "Add": "Pridėti",
+  "Loading study plans...": "Įkeliami ugdymo planai...",
+  "Could not load submitted study plans.": "Nepavyko įkelti pateiktų ugdymo planų.",
+  "View submitted study plans, manage edit requests, manage student submissions, and export everything to Excel.": "Peržiūrėkite pateiktus ugdymo planus, tvarkykite redagavimo prašymus, mokinių pateikimus ir eksportuokite į Excel.",
+  "Refresh": "Atnaujinti",
+  "Export Excel": "Eksportuoti Excel",
+  "Students": "Mokiniai",
+  "Edit Requests": "Redagavimo prašymai",
+  "Edit Permission Requests": "Redagavimo leidimo prašymai",
+  "Approve or deny students who requested permission to update their already submitted study plan.": "Patvirtinkite arba atmeskite mokinius, kurie prašo leidimo atnaujinti jau pateiktą ugdymo planą.",
+  "No pending edit requests.": "Laukiančių redagavimo prašymų nėra.",
+  "Approve": "Patvirtinti",
+  "Deny": "Atmesti",
+  "Search by name, student number, or class": "Ieškoti pagal vardą, mokinio numerį arba klasę",
+  "All School Years": "Visi mokslo metai",
+  "Delete Selected": "Ištrinti pasirinktus",
+  "Select All Filtered": "Pasirinkti visus filtruotus",
+  "Selected:": "Pasirinkta:",
+  "No study plans found": "Ugdymo planų nerasta",
+  "Try changing your search or school year filter.": "Pabandykite pakeisti paiešką arba mokslo metų filtrą.",
+  "View": "Peržiūrėti",
+  "Hide": "Slėpti",
+  "Not provided": "Nepateikta",
+  "No school years": "Mokslo metai nenurodyti",
+  "Edit:": "Redagavimas:",
+  "Status:": "Būsena:",
+  "Selected subjects:": "Pasirinkti dalykai:",
+  "hours:": "valandos:",
+  "Total Logs": "Iš viso įrašų",
+  "Shown Results": "Rodomi rezultatai",
+  "Limit": "Limitas",
+  "View important admin actions such as edit approvals, denials, deletions, exports, and study plan configuration changes.": "Peržiūrėkite svarbius administratoriaus veiksmus: redagavimo patvirtinimus, atmetimus, ištrynimus, eksportus ir ugdymo plano konfigūracijos pakeitimus.",
+  "Latest 100 audit log records from the database.": "Naujausi 100 veiksmų žurnalo įrašų iš duomenų bazės.",
+  "Search audit logs": "Ieškoti veiksmų žurnale",
+  "Loading audit logs...": "Įkeliamas veiksmų žurnalas...",
+  "Could not load audit logs.": "Nepavyko įkelti veiksmų žurnalo.",
+  "No audit logs found": "Veiksmų žurnalo įrašų nerasta",
+  "Try changing your search text.": "Pabandykite pakeisti paieškos tekstą.",
+  "Time": "Laikas",
+  "User": "Vartotojas",
+  "Role": "Rolė",
+  "Action": "Veiksmas",
+  "Details": "Informacija",
+  "Unknown time": "Laikas nežinomas",
+  "Turn maintenance mode on or off. When enabled, students will only see the maintenance page and student actions will be blocked.": "Įjunkite arba išjunkite priežiūros režimą. Įjungus mokiniai matys tik priežiūros puslapį, o mokinių veiksmai bus blokuojami.",
+  "Maintenance mode is currently ON": "Priežiūros režimas šiuo metu ĮJUNGTAS",
+  "Maintenance mode is currently OFF": "Priežiūros režimas šiuo metu IŠJUNGTAS",
+  "Students are blocked from using the study plan form.": "Mokiniai negali naudotis ugdymo plano forma.",
+  "Students can use the system normally.": "Mokiniai gali naudotis sistema įprastai.",
+  "Maintenance Settings": "Priežiūros nustatymai",
+  "This message will be shown to students while maintenance mode is active.": "Šis pranešimas bus rodomas mokiniams, kai priežiūros režimas aktyvus.",
+  "Enable maintenance mode": "Įjungti priežiūros režimą",
+  "Maintenance Page Title": "Priežiūros puslapio pavadinimas",
+  "Maintenance Message": "Priežiūros pranešimas",
+  "Saving...": "Išsaugoma...",
+  "Save Maintenance Settings": "Išsaugoti priežiūros nustatymus",
+  "Website is under maintenance": "Svetainė šiuo metu prižiūrima",
+  "The study plan system is currently being updated. Please come back later.": "Ugdymo plano sistema šiuo metu atnaujinama. Prašome sugrįžti vėliau.",
+  "Students cannot submit, update, or request edit permission while maintenance mode is active.": "Kai priežiūros režimas aktyvus, mokiniai negali pateikti, atnaujinti ar prašyti redagavimo leidimo.",
+  "Refresh Page": "Atnaujinti puslapį",
+  "Checking maintenance status...": "Tikrinama priežiūros būsena...",
+  "Logout": "Atsijungti"
+};
+
+const REVERSE_TEXT_TRANSLATIONS = Object.fromEntries(
+  Object.entries(TEXT_TRANSLATIONS).map(([english, lithuanian]) => [lithuanian, english])
+);
+
+function translateDynamicText(value, language) {
+  const text = value.replace(/\s+/g, " ").trim();
+
+  if (!text) return text;
+
+  if (language === "lt") {
+    if (TEXT_TRANSLATIONS[text]) return TEXT_TRANSLATIONS[text];
+
+    let match = text.match(/^Required: choose (\d+)(?: to (\d+))?$/);
+    if (match) {
+      return match[2]
+        ? `Privaloma: pasirinkite nuo ${match[1]} iki ${match[2]}`
+        : `Privaloma: pasirinkite ${match[1]}`;
+    }
+
+    match = text.match(/^Need (\d+) more$/);
+    if (match) return `Trūksta: ${match[1]}`;
+
+    match = text.match(/^Complete (\d+)\/(\d+)$/);
+    if (match) return `Užbaigta ${match[1]}/${match[2]}`;
+
+    match = text.match(/^Selected (\d+)\/(\d+)$/);
+    if (match) return `Pasirinkta ${match[1]}/${match[2]}`;
+
+    match = text.match(/^(.+): select (\d+) more$/);
+    if (match) return `${match[1]}: pasirinkite dar ${match[2]}`;
+
+    match = text.match(/^(.+): too many selected$/);
+    if (match) return `${match[1]}: pasirinkta per daug`;
+
+    match = text.match(/^Class: (.+)$/);
+    if (match) return `Klasė: ${match[1]}`;
+
+    match = text.match(/^Status: (.+)$/);
+    if (match) return `Būsena: ${match[1]}`;
+
+    match = text.match(/^Edit: (.+)$/);
+    if (match) return `Redagavimas: ${match[1]}`;
+
+    match = text.match(/^Grade III: (.+)$/);
+    if (match) return `III klasė: ${match[1]}`;
+
+    match = text.match(/^Grade IV: (.+)$/);
+    if (match) return `IV klasė: ${match[1]}`;
+
+    match = text.match(/^Selected subjects: (\d+) \| Grade III hours: (\d+) \| Grade IV hours: (\d+)$/);
+    if (match) {
+      return `Pasirinkti dalykai: ${match[1]} | III klasės valandos: ${match[2]} | IV klasės valandos: ${match[3]}`;
+    }
+
+    return text;
+  }
+
+  if (REVERSE_TEXT_TRANSLATIONS[text]) return REVERSE_TEXT_TRANSLATIONS[text];
+  return text;
+}
+
+function translateValue(value, language) {
+  if (!value || typeof value !== "string") return value;
+
+  const leading = value.match(/^\s*/)?.[0] || "";
+  const trailing = value.match(/\s*$/)?.[0] || "";
+  const translated = translateDynamicText(value, language);
+
+  return leading + translated + trailing;
+}
+
+function useAutoTranslate(language) {
+  useEffect(() => {
+    const originalTextNodes = new WeakMap();
+    const originalAttributeValues = new WeakMap();
+
+    const translateElement = (root) => {
+      if (!root) return;
+
+      const walker = document.createTreeWalker(
+        root,
+        NodeFilter.SHOW_TEXT,
+        {
+          acceptNode(node) {
+            if (!node.nodeValue || !node.nodeValue.trim()) {
+              return NodeFilter.FILTER_REJECT;
+            }
+
+            const parent = node.parentElement;
+            if (!parent) return NodeFilter.FILTER_REJECT;
+
+            if (parent.closest("script, style, textarea, code, pre, [data-no-translate]")) {
+              return NodeFilter.FILTER_REJECT;
+            }
+
+            return NodeFilter.FILTER_ACCEPT;
+          }
+        }
+      );
+
+      const textNodes = [];
+      while (walker.nextNode()) {
+        textNodes.push(walker.currentNode);
+      }
+
+      textNodes.forEach((node) => {
+        if (!originalTextNodes.has(node)) {
+          originalTextNodes.set(node, node.nodeValue);
+        }
+
+        const original = originalTextNodes.get(node);
+        node.nodeValue = language === "lt" ? translateValue(original, "lt") : original;
+      });
+
+      const elements = root.querySelectorAll?.("input, textarea, option, button, [title], [aria-label]") || [];
+      elements.forEach((element) => {
+        ["placeholder", "title", "aria-label", "value"].forEach((attribute) => {
+          if (!element.hasAttribute(attribute)) return;
+
+          if (attribute === "value" && !["button", "submit", "reset"].includes(element.type)) {
+            return;
+          }
+
+          let originalAttributes = originalAttributeValues.get(element);
+          if (!originalAttributes) {
+            originalAttributes = {};
+            originalAttributeValues.set(element, originalAttributes);
+          }
+
+          if (!originalAttributes[attribute]) {
+            originalAttributes[attribute] = element.getAttribute(attribute);
+          }
+
+          const original = originalAttributes[attribute];
+          element.setAttribute(
+            attribute,
+            language === "lt" ? translateValue(original, "lt") : original
+          );
+        });
+      });
+    };
+
+    const translatePage = () => translateElement(document.body);
+
+    const timeoutId = window.setTimeout(translatePage, 0);
+    const observer = new MutationObserver(() => {
+      window.requestAnimationFrame(translatePage);
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true
+    });
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      observer.disconnect();
+    };
+  }, [language]);
+}
+
+function LanguageToggle({ language, setLanguage }) {
+  return (
+    <div
+      data-no-translate
+      className="inline-flex bg-white/90 border-2 border-blue-100 rounded-2xl p-1 shadow-sm"
+    >
+      <button
+        type="button"
+        onClick={() => setLanguage("en")}
+        className={`px-4 py-2 rounded-xl font-black transition ${
+          language === "en"
+            ? "bg-blue-600 text-white"
+            : "text-blue-700 hover:bg-blue-50"
+        }`}
+      >
+        EN
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setLanguage("lt")}
+        className={`px-4 py-2 rounded-xl font-black transition ${
+          language === "lt"
+            ? "bg-blue-600 text-white"
+            : "text-blue-700 hover:bg-blue-50"
+        }`}
+      >
+        LT
+      </button>
+    </div>
+  );
+}
+
 function StudyPlanForm({ loggedInUser }) {
   const [categories, setCategories] = useState([]);
   const [schoolYears, setSchoolYears] = useState([]);
@@ -1616,7 +1983,7 @@ function ManageStudyPlanConfig() {
   );
 }
 
-function LoginPage({ onLogin, onGoToRegister }) {
+function LoginPage({ onLogin, onGoToRegister, language, setLanguage }) {
   const [loginData, setLoginData] = useState({
     username: "",
     password: ""
@@ -1652,7 +2019,10 @@ function LoginPage({ onLogin, onGoToRegister }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-700 via-blue-500 to-yellow-300 flex items-center justify-center px-6 py-10 md:px-10 md:py-12 font-['Inter']">
+    <div className="relative min-h-screen bg-gradient-to-br from-blue-700 via-blue-500 to-yellow-300 flex items-center justify-center px-6 py-10 md:px-10 md:py-12 font-['Inter']">
+      <div className="absolute top-5 right-5 z-20">
+        <LanguageToggle language={language} setLanguage={setLanguage} />
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 max-w-6xl w-full bg-white rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white">
         <div className="hidden lg:flex flex-col justify-between p-12 bg-blue-700 text-white relative overflow-hidden">
           <div className="absolute -top-20 -right-20 w-72 h-72 bg-yellow-300/40 rounded-full blur-3xl"></div>
@@ -1740,7 +2110,7 @@ function LoginPage({ onLogin, onGoToRegister }) {
   );
 }
 
-function RegisterPage({ onRegisterSuccess, onGoToLogin }) {
+function RegisterPage({ onRegisterSuccess, onGoToLogin, language, setLanguage }) {
   const [registerData, setRegisterData] = useState({
     username: "",
     password: "",
@@ -1835,7 +2205,10 @@ function RegisterPage({ onRegisterSuccess, onGoToLogin }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-700 via-blue-500 to-yellow-300 flex items-center justify-center px-6 py-10 md:px-10 md:py-12 font-['Inter']">
+    <div className="relative min-h-screen bg-gradient-to-br from-blue-700 via-blue-500 to-yellow-300 flex items-center justify-center px-6 py-10 md:px-10 md:py-12 font-['Inter']">
+      <div className="absolute top-5 right-5 z-20">
+        <LanguageToggle language={language} setLanguage={setLanguage} />
+      </div>
       <div className="bg-white w-full max-w-md p-8 md:p-12 rounded-[2.5rem] shadow-2xl border-4 border-white">
         <div className="text-center mb-8">
           <div className="bg-yellow-300 text-blue-950 p-4 rounded-3xl inline-flex mb-5">
@@ -1943,6 +2316,7 @@ export default function App() {
 
   const [maintenanceStatus, setMaintenanceStatus] = useState(null);
   const [maintenanceLoading, setMaintenanceLoading] = useState(false);
+  const [language, setLanguage] = useState(() => localStorage.getItem("siteLanguage") || "en");
   const [authPage, setAuthPage] = useState("login");
   const [adminPage, setAdminPage] = useState("dashboard");
 
@@ -1965,11 +2339,19 @@ export default function App() {
     fetchMaintenanceStatus();
   }, [loggedInUser]);
 
+  useEffect(() => {
+    localStorage.setItem("siteLanguage", language);
+  }, [language]);
+
+  useAutoTranslate(language);
+
   if (!loggedInUser && authPage === "login") {
     return (
       <LoginPage
         onLogin={setLoggedInUser}
         onGoToRegister={() => setAuthPage("register")}
+        language={language}
+        setLanguage={setLanguage}
       />
     );
   }
@@ -1979,6 +2361,8 @@ export default function App() {
       <RegisterPage
         onRegisterSuccess={setLoggedInUser}
         onGoToLogin={() => setAuthPage("login")}
+        language={language}
+        setLanguage={setLanguage}
       />
     );
   }
@@ -2052,6 +2436,8 @@ export default function App() {
                 </button>
               </div>
             )}
+
+            <LanguageToggle language={language} setLanguage={setLanguage} />
 
             <div className="hidden sm:block text-right">
               <p className="text-sm font-black text-slate-900">
