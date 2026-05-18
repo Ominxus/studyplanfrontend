@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import AdminDashboard from "./AdminDashboard";
 import AuditLogs from "./AuditLogs";
-import MaintenancePage from "./MaintenancePage";
+import Maintenance from "./Maintenance";
 import MaintenanceSettings from "./MaintenanceSettings";
 import {
   GraduationCap,
@@ -2094,7 +2094,7 @@ export default function App() {
           />
         )
       ) : maintenanceStatus?.enabled ? (
-        <MaintenancePage status={maintenanceStatus} />
+        <Maintenance status={maintenanceStatus} />
       ) : maintenanceLoading ? (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-yellow-100 flex items-center justify-center p-8">
           <div className="bg-white border-4 border-blue-200 p-10 rounded-[2rem] shadow-2xl text-center">
