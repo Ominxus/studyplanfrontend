@@ -11,6 +11,65 @@ import {
 
 const MAINTENANCE_API = `${import.meta.env.VITE_API_BASE_URL}/api/maintenance/status`;
 
+function getLanguage() {
+  return localStorage.getItem("language") || "en";
+}
+
+const translations = {
+  lt: {
+    "Website is under maintenance": "Svetainė laikinai prižiūrima",
+    "The study plan system is currently being updated. Please come back later.":
+      "Ugdymo plano sistema šiuo metu atnaujinama. Prašome sugrįžti vėliau.",
+
+    "Maintenance title is required.": "Priežiūros puslapio pavadinimas yra privalomas.",
+    "Maintenance message is required.": "Priežiūros žinutė yra privaloma.",
+    "Maintenance mode enabled.": "Priežiūros režimas įjungtas.",
+    "Maintenance mode disabled.": "Priežiūros režimas išjungtas.",
+    "Could not update maintenance mode.": "Nepavyko atnaujinti priežiūros režimo.",
+
+    "Admin Maintenance Control": "Administratoriaus priežiūros valdymas",
+    "Maintenance Mode.": "Priežiūros režimas.",
+    "Turn maintenance mode on or off. When enabled, students will only see the maintenance page and student actions will be blocked.":
+      "Įjunkite arba išjunkite priežiūros režimą. Kai jis įjungtas, mokiniai matys tik priežiūros puslapį, o mokinių veiksmai bus blokuojami.",
+
+    "Maintenance mode is currently ON": "Priežiūros režimas šiuo metu ĮJUNGTAS",
+    "Maintenance mode is currently OFF": "Priežiūros režimas šiuo metu IŠJUNGTAS",
+    "Students are blocked from using the study plan form.":
+      "Mokiniams neleidžiama naudotis ugdymo plano forma.",
+    "Students can use the system normally.":
+      "Mokiniai gali naudotis sistema įprastai.",
+
+    "Maintenance Settings": "Priežiūros nustatymai",
+    "This message will be shown to students while maintenance mode is active.":
+      "Ši žinutė bus rodoma mokiniams, kai priežiūros režimas bus įjungtas.",
+    "Enable maintenance mode": "Įjungti priežiūros režimą",
+    "Maintenance Page Title": "Priežiūros puslapio pavadinimas",
+    "Maintenance Message": "Priežiūros žinutė",
+    "Saving...": "Išsaugoma...",
+    "Save Maintenance Settings": "Išsaugoti priežiūros nustatymus"
+  }
+};
+
+function t(text) {
+  const language = getLanguage();
+
+  if (language === "lt") {
+    return translations.lt[text] || text;
+  }
+
+  return text;
+}
+
+function getErrorMessage(error, fallback) {
+  if (error.response?.data) {
+    return typeof error.response.data === "string"
+      ? error.response.data
+      : error.response.data.message || JSON.stringify(error.response.data);
+  }
+
+  return fallback;
+}
+
 export default function MaintenanceSettings({ maintenanceStatus, onRefresh }) {
   const [formData, setFormData] = useState({
     enabled: false,
@@ -35,12 +94,12 @@ export default function MaintenanceSettings({ maintenanceStatus, onRefresh }) {
 
   const saveMaintenanceStatus = async () => {
     if (!formData.title.trim()) {
-      alert("Maintenance title is required.");
+      alert(t("Maintenance title is required."));
       return;
     }
 
     if (!formData.message.trim()) {
-      alert("Maintenance message is required.");
+      alert(t("Maintenance message is required."));
       return;
     }
 
@@ -55,8 +114,8 @@ export default function MaintenanceSettings({ maintenanceStatus, onRefresh }) {
 
       alert(
         formData.enabled
-          ? "Maintenance mode enabled."
-          : "Maintenance mode disabled."
+          ? t("Maintenance mode enabled.")
+          : t("Maintenance mode disabled.")
       );
 
       if (onRefresh) {
@@ -64,17 +123,7 @@ export default function MaintenanceSettings({ maintenanceStatus, onRefresh }) {
       }
     } catch (error) {
       console.error("Could not update maintenance mode:", error);
-
-      if (error.response?.data) {
-        const message =
-          typeof error.response.data === "string"
-            ? error.response.data
-            : error.response.data.message || JSON.stringify(error.response.data);
-
-        alert(message);
-      } else {
-        alert("Could not update maintenance mode.");
-      }
+      alert(getErrorMessage(error, t("Could not update maintenance mode.")));
     } finally {
       setLoading(false);
     }
@@ -89,16 +138,17 @@ export default function MaintenanceSettings({ maintenanceStatus, onRefresh }) {
           <div className="relative">
             <div className="inline-flex items-center gap-2 bg-yellow-300 text-blue-950 px-4 py-2 rounded-full font-black text-sm mb-7">
               <Settings size={18} />
-              Admin Maintenance Control
+              {t("Admin Maintenance Control")}
             </div>
 
             <h1 className="text-5xl md:text-7xl font-black leading-tight tracking-tight">
-              Maintenance Mode.
+              {t("Maintenance Mode.")}
             </h1>
 
             <p className="mt-6 text-blue-50 text-lg max-w-3xl">
-              Turn maintenance mode on or off. When enabled, students will only
-              see the maintenance page and student actions will be blocked.
+              {t(
+                "Turn maintenance mode on or off. When enabled, students will only see the maintenance page and student actions will be blocked."
+              )}
             </p>
           </div>
         </section>
@@ -122,13 +172,13 @@ export default function MaintenanceSettings({ maintenanceStatus, onRefresh }) {
             <div>
               <h2 className="text-2xl font-black">
                 {formData.enabled
-                  ? "Maintenance mode is currently ON"
-                  : "Maintenance mode is currently OFF"}
+                  ? t("Maintenance mode is currently ON")
+                  : t("Maintenance mode is currently OFF")}
               </h2>
               <p className="text-sm font-bold mt-1">
                 {formData.enabled
-                  ? "Students are blocked from using the study plan form."
-                  : "Students can use the system normally."}
+                  ? t("Students are blocked from using the study plan form.")
+                  : t("Students can use the system normally.")}
               </p>
             </div>
           </div>
@@ -142,11 +192,12 @@ export default function MaintenanceSettings({ maintenanceStatus, onRefresh }) {
 
             <div>
               <h2 className="text-3xl font-black text-slate-900">
-                Maintenance Settings
+                {t("Maintenance Settings")}
               </h2>
               <p className="text-sm text-slate-500 mt-1">
-                This message will be shown to students while maintenance mode is
-                active.
+                {t(
+                  "This message will be shown to students while maintenance mode is active."
+                )}
               </p>
             </div>
           </div>
@@ -165,14 +216,14 @@ export default function MaintenanceSettings({ maintenanceStatus, onRefresh }) {
             />
 
             <span className="font-black text-slate-800">
-              Enable maintenance mode
+              {t("Enable maintenance mode")}
             </span>
           </label>
 
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-black text-slate-700 mb-2">
-                Maintenance Page Title
+                {t("Maintenance Page Title")}
               </label>
 
               <input
@@ -189,7 +240,7 @@ export default function MaintenanceSettings({ maintenanceStatus, onRefresh }) {
 
             <div>
               <label className="block text-sm font-black text-slate-700 mb-2">
-                Maintenance Message
+                {t("Maintenance Message")}
               </label>
 
               <textarea
@@ -215,8 +266,14 @@ export default function MaintenanceSettings({ maintenanceStatus, onRefresh }) {
                   : "bg-blue-600 text-white hover:bg-blue-700"
               }`}
             >
-              {loading ? <RefreshCw size={20} className="animate-spin" /> : <Save size={20} />}
-              {loading ? "Saving..." : "Save Maintenance Settings"}
+              {loading ? (
+                <RefreshCw size={20} className="animate-spin" />
+              ) : (
+                <Save size={20} />
+              )}
+              {loading
+                ? t("Saving...")
+                : t("Save Maintenance Settings")}
             </button>
           </div>
         </div>

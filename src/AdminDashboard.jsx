@@ -21,6 +21,113 @@ import {
 
 const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/api/studyplans`;
 
+function getLanguage() {
+  return localStorage.getItem("language") || "en";
+}
+
+const translations = {
+  lt: {
+    "Could not load submitted study plans.":
+      "Nepavyko įkelti pateiktų ugdymo planų.",
+    "Could not export Excel file.": "Nepavyko eksportuoti Excel failo.",
+    "Select at least one student to delete.":
+      "Pasirinkite bent vieną mokinį, kurį norite ištrinti.",
+    "Delete selected student submissions?":
+      "Ar tikrai norite ištrinti pasirinktus mokinių pateikimus?",
+    "Selected students deleted.": "Pasirinkti mokiniai ištrinti.",
+    "Could not delete selected students.":
+      "Nepavyko ištrinti pasirinktų mokinių.",
+    "Approve this student's edit request?":
+      "Ar patvirtinti šio mokinio redagavimo prašymą?",
+    "Edit request approved.": "Redagavimo prašymas patvirtintas.",
+    "Could not approve edit request.":
+      "Nepavyko patvirtinti redagavimo prašymo.",
+    "Deny this student's edit request?":
+      "Ar atmesti šio mokinio redagavimo prašymą?",
+    "Edit request denied.": "Redagavimo prašymas atmestas.",
+    "Could not deny edit request.":
+      "Nepavyko atmesti redagavimo prašymo.",
+
+    "Admin Mode": "Administratoriaus režimas",
+    "Dashboard.": "Skydelis.",
+    "View submitted study plans, manage edit requests, manage student submissions, and export everything to Excel.":
+      "Peržiūrėkite pateiktus ugdymo planus, tvarkykite redagavimo prašymus, mokinių pateikimus ir eksportuokite duomenis į Excel.",
+    Refresh: "Atnaujinti",
+    "Export Excel": "Eksportuoti Excel",
+    Students: "Mokiniai",
+    Subjects: "Dalykai",
+    "Grade III": "III klasė",
+    "Grade IV": "IV klasė",
+    "Edit Requests": "Redagavimo prašymai",
+
+    "Edit Permission Requests": "Redagavimo leidimo prašymai",
+    "Approve or deny students who requested permission to update their already submitted study plan.":
+      "Patvirtinkite arba atmeskite mokinių prašymus redaguoti jau pateiktą ugdymo planą.",
+    "No pending edit requests.": "Laukiančių redagavimo prašymų nėra.",
+    Class: "Klasė",
+    "Not provided": "Nepateikta",
+    "No school years": "Mokslo metai nenurodyti",
+    Status: "Būsena",
+    PENDING: "LAUKIA",
+    APPROVED: "PATVIRTINTA",
+    DENIED: "ATMESTA",
+    NONE: "NĖRA",
+    "Selected subjects": "Pasirinkti dalykai",
+    "Grade III hours": "III klasės valandos",
+    "Grade IV hours": "IV klasės valandos",
+    Approve: "Patvirtinti",
+    Deny: "Atmesti",
+
+    "Search by name, student number, or class":
+      "Ieškoti pagal vardą, mokinio numerį arba klasę",
+    "All School Years": "Visi mokslo metai",
+    "Delete Selected": "Ištrinti pasirinktus",
+    "Select All Filtered": "Pasirinkti visus filtruotus",
+    Selected: "Pasirinkta",
+    "Loading study plans...": "Įkeliami ugdymo planai...",
+    "No study plans found": "Ugdymo planų nerasta",
+    "Try changing your search or school year filter.":
+      "Pabandykite pakeisti paiešką arba mokslo metų filtrą.",
+    Edit: "Redagavimas",
+    Hide: "Slėpti",
+    View: "Peržiūrėti",
+    "Selected Subjects": "Pasirinkti dalykai"
+  }
+};
+
+function t(text) {
+  const language = getLanguage();
+
+  if (language === "lt") {
+    return translations.lt[text] || text;
+  }
+
+  return text;
+}
+
+function getErrorMessage(error, fallback) {
+  if (error.response?.data) {
+    return typeof error.response.data === "string"
+      ? error.response.data
+      : error.response.data.message || JSON.stringify(error.response.data);
+  }
+
+  return fallback;
+}
+
+function getStatusText(status) {
+  if (!status) return t("NONE");
+
+  const normalized = status.toUpperCase();
+
+  if (normalized === "PENDING") return t("PENDING");
+  if (normalized === "APPROVED") return t("APPROVED");
+  if (normalized === "DENIED") return t("DENIED");
+  if (normalized === "NONE") return t("NONE");
+
+  return status;
+}
+
 export default function AdminDashboard() {
   const [plans, setPlans] = useState([]);
   const [editRequests, setEditRequests] = useState([]);
@@ -52,7 +159,7 @@ export default function AdminDashboard() {
       setError("");
     } catch (err) {
       console.error("Could not load dashboard data:", err);
-      setError("Could not load submitted study plans.");
+      setError(t("Could not load submitted study plans."));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -83,7 +190,7 @@ export default function AdminDashboard() {
       fetchPlans();
     } catch (error) {
       console.error("Export failed:", error);
-      alert("Could not export Excel file.");
+      alert(t("Could not export Excel file."));
     }
   };
 
@@ -164,13 +271,11 @@ export default function AdminDashboard() {
 
   const deleteSelectedStudents = async () => {
     if (selectedPlanIds.length === 0) {
-      alert("Select at least one student to delete.");
+      alert(t("Select at least one student to delete."));
       return;
     }
 
-    if (
-      !confirm(`Delete ${selectedPlanIds.length} selected student submission(s)?`)
-    ) {
+    if (!confirm(`${t("Delete selected student submissions?")}`)) {
       return;
     }
 
@@ -179,57 +284,37 @@ export default function AdminDashboard() {
         selectedPlanIds.map((id) => axios.delete(`${API_BASE_URL}/${id}`))
       );
 
-      alert("Selected students deleted.");
+      alert(t("Selected students deleted."));
       fetchPlans();
     } catch (error) {
       console.error("Delete failed:", error);
-      alert("Could not delete selected students.");
+      alert(t("Could not delete selected students."));
     }
   };
 
   const approveEditRequest = async (planId) => {
-    if (!confirm("Approve this student's edit request?")) return;
+    if (!confirm(t("Approve this student's edit request?"))) return;
 
     try {
       const response = await axios.post(`${API_BASE_URL}/approve-edit/${planId}`);
-      alert(response.data || "Edit request approved.");
+      alert(response.data || t("Edit request approved."));
       fetchPlans();
     } catch (error) {
       console.error("Approve failed:", error);
-
-      if (error.response?.data) {
-        const message =
-          typeof error.response.data === "string"
-            ? error.response.data
-            : error.response.data.message || JSON.stringify(error.response.data);
-
-        alert(message);
-      } else {
-        alert("Could not approve edit request.");
-      }
+      alert(getErrorMessage(error, t("Could not approve edit request.")));
     }
   };
 
   const denyEditRequest = async (planId) => {
-    if (!confirm("Deny this student's edit request?")) return;
+    if (!confirm(t("Deny this student's edit request?"))) return;
 
     try {
       const response = await axios.post(`${API_BASE_URL}/deny-edit/${planId}`);
-      alert(response.data || "Edit request denied.");
+      alert(response.data || t("Edit request denied."));
       fetchPlans();
     } catch (error) {
       console.error("Deny failed:", error);
-
-      if (error.response?.data) {
-        const message =
-          typeof error.response.data === "string"
-            ? error.response.data
-            : error.response.data.message || JSON.stringify(error.response.data);
-
-        alert(message);
-      } else {
-        alert("Could not deny edit request.");
-      }
+      alert(getErrorMessage(error, t("Could not deny edit request.")));
     }
   };
 
@@ -244,16 +329,17 @@ export default function AdminDashboard() {
             <div>
               <div className="inline-flex items-center gap-2 bg-yellow-300 text-blue-950 px-4 py-2 rounded-full font-black text-sm mb-7">
                 <Sparkles size={18} />
-                Admin Mode
+                {t("Admin Mode")}
               </div>
 
               <h1 className="text-5xl md:text-7xl font-black leading-tight tracking-tight">
-                Dashboard.
+                {t("Dashboard.")}
               </h1>
 
               <p className="text-blue-50 mt-6 max-w-2xl text-lg">
-                View submitted study plans, manage edit requests, manage
-                student submissions, and export everything to Excel.
+                {t(
+                  "View submitted study plans, manage edit requests, manage student submissions, and export everything to Excel."
+                )}
               </p>
             </div>
 
@@ -266,7 +352,7 @@ export default function AdminDashboard() {
                   size={18}
                   className={refreshing ? "animate-spin" : ""}
                 />
-                Refresh
+                {t("Refresh")}
               </button>
 
               <button
@@ -274,7 +360,7 @@ export default function AdminDashboard() {
                 className="inline-flex items-center justify-center gap-2 bg-yellow-300 text-blue-950 px-5 py-4 rounded-2xl hover:bg-yellow-400 transition font-black shadow-lg"
               >
                 <Download size={18} />
-                Export Excel
+                {t("Export Excel")}
               </button>
             </div>
           </div>
@@ -282,35 +368,41 @@ export default function AdminDashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-5 mb-8">
           <div className="bg-white border-4 border-blue-100 p-6 rounded-[2rem] shadow-xl">
-            <p className="text-sm text-slate-500 font-black">Students</p>
+            <p className="text-sm text-slate-500 font-black">{t("Students")}</p>
             <h2 className="text-5xl font-black text-blue-700">
               {totalStudents}
             </h2>
           </div>
 
           <div className="bg-white border-4 border-blue-100 p-6 rounded-[2rem] shadow-xl">
-            <p className="text-sm text-slate-500 font-black">Subjects</p>
+            <p className="text-sm text-slate-500 font-black">{t("Subjects")}</p>
             <h2 className="text-5xl font-black text-blue-700">
               {totalSubjects}
             </h2>
           </div>
 
           <div className="bg-white border-4 border-blue-100 p-6 rounded-[2rem] shadow-xl">
-            <p className="text-sm text-slate-500 font-black">Grade III</p>
+            <p className="text-sm text-slate-500 font-black">
+              {t("Grade III")}
+            </p>
             <h2 className="text-5xl font-black text-yellow-700">
               {totalGradeIiiHours}
             </h2>
           </div>
 
           <div className="bg-white border-4 border-blue-100 p-6 rounded-[2rem] shadow-xl">
-            <p className="text-sm text-slate-500 font-black">Grade IV</p>
+            <p className="text-sm text-slate-500 font-black">
+              {t("Grade IV")}
+            </p>
             <h2 className="text-5xl font-black text-blue-700">
               {totalGradeIvHours}
             </h2>
           </div>
 
           <div className="bg-white border-4 border-yellow-300 p-6 rounded-[2rem] shadow-xl">
-            <p className="text-sm text-slate-500 font-black">Edit Requests</p>
+            <p className="text-sm text-slate-500 font-black">
+              {t("Edit Requests")}
+            </p>
             <h2 className="text-5xl font-black text-yellow-700">
               {editRequests.length}
             </h2>
@@ -325,18 +417,19 @@ export default function AdminDashboard() {
 
             <div>
               <h2 className="text-3xl font-black text-slate-900">
-                Edit Permission Requests
+                {t("Edit Permission Requests")}
               </h2>
               <p className="text-sm text-slate-500 mt-1">
-                Approve or deny students who requested permission to update
-                their already submitted study plan.
+                {t(
+                  "Approve or deny students who requested permission to update their already submitted study plan."
+                )}
               </p>
             </div>
           </div>
 
           {editRequests.length === 0 ? (
             <div className="bg-blue-50 border-2 border-blue-100 rounded-2xl p-5 text-slate-600 font-bold">
-              No pending edit requests.
+              {t("No pending edit requests.")}
             </div>
           ) : (
             <div className="space-y-5">
@@ -358,23 +451,24 @@ export default function AdminDashboard() {
                         </span>
 
                         <span className="inline-flex items-center gap-1 bg-white border-2 border-blue-100 px-3 py-1 rounded-full font-bold">
-                          Class: {plan.classYear || "Not provided"}
+                          {t("Class")}: {plan.classYear || t("Not provided")}
                         </span>
 
                         <span className="inline-flex items-center gap-1 bg-white border-2 border-yellow-200 px-3 py-1 rounded-full font-bold text-slate-700">
                           <CalendarDays size={14} />
-                          {plan.schoolYear || "No school years"}
+                          {plan.schoolYear || t("No school years")}
                         </span>
 
                         <span className="inline-flex items-center gap-1 bg-white border-2 border-yellow-200 px-3 py-1 rounded-full font-bold text-yellow-800">
-                          Status: {plan.editRequestStatus || "PENDING"}
+                          {t("Status")}:{" "}
+                          {getStatusText(plan.editRequestStatus || "PENDING")}
                         </span>
                       </div>
 
                       <p className="text-sm text-slate-600 mt-4 font-semibold">
-                        Selected subjects: {getTotalSubjects(plan)} | Grade III
-                        hours: {getTotalGradeIiiHours(plan)} | Grade IV hours:{" "}
-                        {getTotalGradeIvHours(plan)}
+                        {t("Selected subjects")}: {getTotalSubjects(plan)} |{" "}
+                        {t("Grade III hours")}: {getTotalGradeIiiHours(plan)} |{" "}
+                        {t("Grade IV hours")}: {getTotalGradeIvHours(plan)}
                       </p>
                     </div>
 
@@ -384,7 +478,7 @@ export default function AdminDashboard() {
                         className="inline-flex items-center justify-center gap-2 bg-green-600 text-white px-5 py-4 rounded-2xl font-black hover:bg-green-700 transition"
                       >
                         <CheckCircle size={18} />
-                        Approve
+                        {t("Approve")}
                       </button>
 
                       <button
@@ -392,7 +486,7 @@ export default function AdminDashboard() {
                         className="inline-flex items-center justify-center gap-2 bg-red-600 text-white px-5 py-4 rounded-2xl font-black hover:bg-red-700 transition"
                       >
                         <XCircle size={18} />
-                        Deny
+                        {t("Deny")}
                       </button>
                     </div>
                   </div>
@@ -413,7 +507,7 @@ export default function AdminDashboard() {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name, student number, or class"
+                placeholder={t("Search by name, student number, or class")}
                 className="w-full pl-12 pr-4 py-4 border-2 border-blue-100 rounded-2xl bg-blue-50 focus:bg-white focus:outline-none focus:border-blue-500 transition"
               />
             </div>
@@ -431,7 +525,7 @@ export default function AdminDashboard() {
               >
                 {schoolYears.map((year) => (
                   <option key={year} value={year}>
-                    {year === "All" ? "All School Years" : year}
+                    {year === "All" ? t("All School Years") : year}
                   </option>
                 ))}
               </select>
@@ -447,7 +541,7 @@ export default function AdminDashboard() {
               }`}
             >
               <Trash2 size={18} />
-              Delete Selected
+              {t("Delete Selected")}
             </button>
           </div>
 
@@ -457,11 +551,11 @@ export default function AdminDashboard() {
               className="inline-flex items-center gap-2 bg-yellow-300 text-blue-950 px-4 py-2 rounded-2xl font-black hover:bg-yellow-400 transition"
             >
               <CheckSquare size={18} />
-              Select All Filtered
+              {t("Select All Filtered")}
             </button>
 
             <span className="text-sm font-bold text-slate-600">
-              Selected: {selectedPlanIds.length}
+              {t("Selected")}: {selectedPlanIds.length}
             </span>
           </div>
         </div>
@@ -472,7 +566,9 @@ export default function AdminDashboard() {
               size={32}
               className="animate-spin mx-auto mb-3 text-blue-600"
             />
-            <p className="font-black text-slate-700">Loading study plans...</p>
+            <p className="font-black text-slate-700">
+              {t("Loading study plans...")}
+            </p>
           </div>
         )}
 
@@ -489,10 +585,10 @@ export default function AdminDashboard() {
           <div className="bg-white border-4 border-blue-100 p-10 rounded-[2rem] shadow-xl text-center text-slate-600">
             <Inbox size={42} className="mx-auto mb-3 text-blue-400" />
             <h3 className="text-xl font-black text-slate-800">
-              No study plans found
+              {t("No study plans found")}
             </h3>
             <p className="text-slate-500 mt-1">
-              Try changing your search or school year filter.
+              {t("Try changing your search or school year filter.")}
             </p>
           </div>
         )}
@@ -535,12 +631,13 @@ export default function AdminDashboard() {
                           </span>
 
                           <span className="inline-flex items-center gap-1 bg-white border-2 border-blue-100 px-3 py-1 rounded-full font-bold">
-                            Class: {plan.classYear || "Not provided"}
+                            {t("Class")}:{" "}
+                            {plan.classYear || t("Not provided")}
                           </span>
 
                           <span className="inline-flex items-center gap-1 bg-blue-50 border-2 border-blue-100 px-3 py-1 rounded-full font-bold">
                             <CalendarDays size={14} />
-                            {plan.schoolYear || "No school years"}
+                            {plan.schoolYear || t("No school years")}
                           </span>
 
                           <span
@@ -554,7 +651,8 @@ export default function AdminDashboard() {
                                 : "bg-slate-50 border-slate-200 text-slate-600"
                             }`}
                           >
-                            Edit: {plan.editRequestStatus || "NONE"}
+                            {t("Edit")}:{" "}
+                            {getStatusText(plan.editRequestStatus || "NONE")}
                           </span>
                         </div>
                       </div>
@@ -563,7 +661,7 @@ export default function AdminDashboard() {
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 lg:min-w-[560px]">
                       <div className="bg-blue-50 border-2 border-blue-100 p-4 rounded-2xl text-center">
                         <p className="text-xs font-black text-blue-700">
-                          Subjects
+                          {t("Subjects")}
                         </p>
                         <p className="text-3xl font-black text-blue-900">
                           {getTotalSubjects(plan)}
@@ -572,7 +670,7 @@ export default function AdminDashboard() {
 
                       <div className="bg-yellow-100 border-2 border-yellow-200 p-4 rounded-2xl text-center">
                         <p className="text-xs font-black text-yellow-800">
-                          Grade III
+                          {t("Grade III")}
                         </p>
                         <p className="text-3xl font-black text-yellow-900">
                           {getTotalGradeIiiHours(plan)}
@@ -581,7 +679,7 @@ export default function AdminDashboard() {
 
                       <div className="bg-blue-50 border-2 border-blue-100 p-4 rounded-2xl text-center">
                         <p className="text-xs font-black text-blue-700">
-                          Grade IV
+                          {t("Grade IV")}
                         </p>
                         <p className="text-3xl font-black text-blue-900">
                           {getTotalGradeIvHours(plan)}
@@ -594,11 +692,11 @@ export default function AdminDashboard() {
                       >
                         {isExpanded ? (
                           <>
-                            Hide <ChevronUp size={18} />
+                            {t("Hide")} <ChevronUp size={18} />
                           </>
                         ) : (
                           <>
-                            View <ChevronDown size={18} />
+                            {t("View")} <ChevronDown size={18} />
                           </>
                         )}
                       </button>
@@ -608,7 +706,7 @@ export default function AdminDashboard() {
                   {isExpanded && (
                     <div className="border-t-4 border-blue-100 bg-blue-50/70 p-6 md:p-7">
                       <h3 className="font-black text-slate-900 mb-5 text-xl">
-                        Selected Subjects
+                        {t("Selected Subjects")}
                       </h3>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -626,11 +724,11 @@ export default function AdminDashboard() {
 
                             <div className="flex flex-wrap gap-2 mt-4">
                               <span className="font-black px-3 py-2 rounded-xl bg-yellow-300 text-blue-950">
-                                Grade III: {subject.gradeIiiHours}h
+                                {t("Grade III")}: {subject.gradeIiiHours}h
                               </span>
 
                               <span className="font-black px-3 py-2 rounded-xl bg-blue-600 text-white">
-                                Grade IV: {subject.gradeIvHours}h
+                                {t("Grade IV")}: {subject.gradeIvHours}h
                               </span>
                             </div>
                           </div>
