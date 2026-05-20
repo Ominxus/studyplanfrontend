@@ -114,7 +114,7 @@ export default function AuditLogs() {
   const filteredLogs = logs.filter((log) => {
     const searchText = search.toLowerCase();
 
-    const adminText = log.adminUsername?.toLowerCase() || "";
+    const adminText = log.username?.toLowerCase() || "";
     const actionText = log.action?.toLowerCase() || "";
     const detailsText = log.details?.toLowerCase() || "";
 
@@ -248,7 +248,7 @@ export default function AuditLogs() {
                       <div className="flex flex-wrap gap-3 mt-4 text-sm">
                         <span className="inline-flex items-center gap-1 bg-blue-50 border-2 border-blue-100 px-3 py-1 rounded-full font-bold text-slate-700">
                           <User size={14} />
-                          {t("Admin")}: {log.adminUsername || t("Unknown")}
+                          {t("Admin")}: {log.username || t("Unknown")}
                         </span>
 
                         <span className="inline-flex items-center gap-1 bg-yellow-100 border-2 border-yellow-200 px-3 py-1 rounded-full font-bold text-slate-700">
