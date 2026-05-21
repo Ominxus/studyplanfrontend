@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import schoolLogo from "./assets/didzdvario-logo.png";
 import AdminDashboard from "./AdminDashboard";
 import AuditLogs from "./AuditLogs";
 import Maintenance from "./Maintenance";
@@ -1912,13 +1913,17 @@ function LoginPage({ onLogin, onGoToRegister, language, setLanguage }) {
           <div className="absolute -top-20 -right-20 w-72 h-72 bg-yellow-300/40 rounded-full blur-3xl"></div>
 
           <div className="relative">
-            <div className="bg-yellow-300 text-blue-950 p-4 rounded-3xl inline-flex mb-8">
-              <GraduationCap size={46} />
-            </div>
+            <div className="bg-white p-5 rounded-[2rem] inline-flex mb-8 shadow-xl border-4 border-yellow-300">
+  <img
+    src={schoolLogo}
+    alt="Šiaulių Didždvario gimnazija logo"
+    className="w-44 h-auto object-contain"
+  />
+</div>
 
-            <h1 className="text-6xl leading-none font-black tracking-tight">
-              Study Plan System
-            </h1>
+<h1 className="text-5xl leading-none font-black tracking-tight">
+  Study Plan System
+</h1>
 
             <p className="mt-6 text-blue-100 text-lg leading-relaxed max-w-md">
               A fresh student portal for choosing subjects and managing study
@@ -2101,9 +2106,13 @@ function RegisterPage({
 
       <div className="bg-white w-full max-w-md p-8 md:p-12 rounded-[2.5rem] shadow-2xl border-4 border-white">
         <div className="text-center mb-8">
-          <div className="bg-yellow-300 text-blue-950 p-4 rounded-3xl inline-flex mb-5">
-            <GraduationCap size={36} />
-          </div>
+          <div className="bg-white p-4 rounded-[2rem] inline-flex mb-5 shadow-lg border-4 border-yellow-300">
+  <img
+    src={schoolLogo}
+    alt="Šiaulių Didždvario gimnazija logo"
+    className="w-36 h-auto object-contain"
+  />
+</div>
 
           <h1 className="text-5xl font-black text-slate-900">Register</h1>
 
