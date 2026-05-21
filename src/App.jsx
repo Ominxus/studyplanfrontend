@@ -5,6 +5,7 @@ import AdminDashboard from "./AdminDashboard";
 import AuditLogs from "./AuditLogs";
 import Maintenance from "./Maintenance";
 import MaintenanceSettings from "./MaintenanceSettings";
+import PasswordResetRequests from "./PasswordResetRequests";
 import {
   GraduationCap,
   AlertTriangle,
@@ -1866,8 +1867,131 @@ function ManageStudyPlanConfig() {
     </div>
   );
 }
+function ForgotPasswordPage({ onGoToLogin, language, setLanguage }) {
+  const [username, setUsername] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
-function LoginPage({ onLogin, onGoToRegister, language, setLanguage }) {
+  const PASSWORD_RESET_API = `${API_BASE_URL}/api/password-reset`;
+
+  const getText = (en, lt) => {
+    return language === "lt" ? lt : en;
+  };
+
+  const handleRequestReset = async (e) => {
+    e.preventDefault();
+
+    if (!username.trim()) {
+      setError(
+        getText(
+          "Username / student number is required.",
+          "Vartotojo vardas / mokinio numeris yra privalomas."
+        )
+      );
+      setMessage("");
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${PASSWORD_RESET_API}/request`, {
+        username: username.trim()
+      });
+
+      setMessage(
+        language === "lt"
+          ? "Slaptažodžio atstatymo prašymas išsiųstas administratoriui."
+          : response.data || "Password reset request sent to admin."
+      );
+      setError("");
+      setUsername("");
+    } catch (error) {
+      console.error("Password reset request failed:", error);
+
+      if (error.response?.data) {
+        setError(
+          typeof error.response.data === "string"
+            ? error.response.data
+            : error.response.data.message || JSON.stringify(error.response.data)
+        );
+      } else {
+        setError(
+          getText(
+            "Could not request password reset.",
+            "Nepavyko pateikti slaptažodžio atstatymo prašymo."
+          )
+        );
+      }
+
+      setMessage("");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-700 via-blue-500 to-yellow-300 flex items-center justify-center px-6 py-10 md:px-10 md:py-12 font-['Inter']">
+      <div className="absolute top-5 right-5">
+        <LanguageSwitch language={language} setLanguage={setLanguage} />
+      </div>
+
+      <div className="bg-white w-full max-w-md p-8 md:p-12 rounded-[2.5rem] shadow-2xl border-4 border-white">
+        <div className="text-center mb-8">
+          <div className="bg-yellow-300 text-blue-950 p-4 rounded-3xl inline-flex mb-5">
+            <GraduationCap size={36} />
+          </div>
+
+          <h1 className="text-5xl font-black text-slate-900">
+            {getText("Forgot Password", "Pamiršote slaptažodį")}
+          </h1>
+
+          <p className="text-slate-500 mt-3">
+            {getText(
+              "Enter your username / student number. An admin will reset your password.",
+              "Įveskite vartotojo vardą / mokinio numerį. Administratorius atstatys slaptažodį."
+            )}
+          </p>
+        </div>
+
+        {message && (
+          <div className="bg-green-50 border-2 border-green-200 text-green-700 p-4 rounded-2xl mb-6 font-bold">
+            {message}
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-50 border-2 border-red-200 text-red-700 p-4 rounded-2xl mb-6 font-bold">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleRequestReset} className="space-y-6">
+          <input
+            placeholder={getText(
+              "Username / Student number",
+              "Vartotojo vardas / mokinio numeris"
+            )}
+            value={username}
+            maxLength={20}
+            onChange={(e) => setUsername(e.target.value.replace(/\s/g, ""))}
+            className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
+          />
+
+          <button className="w-full bg-blue-600 text-white p-4 rounded-2xl font-black hover:bg-blue-700 transition shadow-lg">
+            {getText("Send Reset Request", "Siųsti atstatymo prašymą")}
+          </button>
+        </form>
+
+        <p className="text-center text-sm text-slate-600 mt-7">
+          <button
+            onClick={onGoToLogin}
+            className="text-blue-600 font-black hover:underline"
+          >
+            {getText("Back to Login", "Grįžti į prisijungimą")}
+          </button>
+        </p>
+      </div>
+    </div>
+  );
+}
+function LoginPage({ onLogin, onGoToRegister,onGoToForgotPassword, language, setLanguage }) {
   const [loginData, setLoginData] = useState({
     username: "",
     password: ""
@@ -1983,7 +2107,15 @@ function LoginPage({ onLogin, onGoToRegister, language, setLanguage }) {
               Login
             </button>
           </form>
-
+          <div className="text-center mt-5">
+  <button
+    type="button"
+    onClick={onGoToForgotPassword}
+    className="text-blue-600 font-black hover:underline text-sm"
+  >
+    {language === "lt" ? "Pamiršote slaptažodį?" : "Forgot password?"}
+  </button>
+</div>
           <p className="text-center text-sm text-slate-600 mt-7">
             Don&apos;t have an account?{" "}
             <button
@@ -2248,15 +2380,16 @@ export default function App() {
   }, [loggedInUser]);
 
   if (!loggedInUser && authPage === "login") {
-    return (
-      <LoginPage
-        onLogin={setLoggedInUser}
-        onGoToRegister={() => setAuthPage("register")}
-        language={language}
-        setLanguage={setLanguage}
-      />
-    );
-  }
+  return (
+    <LoginPage
+      onLogin={setLoggedInUser}
+      onGoToRegister={() => setAuthPage("register")}
+      onGoToForgotPassword={() => setAuthPage("forgotPassword")}
+      language={language}
+      setLanguage={setLanguage}
+    />
+  );
+}
 
   if (!loggedInUser && authPage === "register") {
     return (
@@ -2268,7 +2401,15 @@ export default function App() {
       />
     );
   }
-
+  if (!loggedInUser && authPage === "forgotPassword") {
+  return (
+    <ForgotPasswordPage
+      onGoToLogin={() => setAuthPage("login")}
+      language={language}
+      setLanguage={setLanguage}
+    />
+  );
+}
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-yellow-100 font-['Inter']">
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b-4 border-blue-100 shadow-sm">
@@ -2336,6 +2477,16 @@ export default function App() {
                 >
                   Maintenance
                 </button>
+                <button
+  onClick={() => setAdminPage("passwordResets")}
+  className={`px-5 py-3 rounded-xl font-black transition ${
+    adminPage === "passwordResets"
+      ? "bg-blue-600 text-white shadow"
+      : "text-blue-700 hover:bg-white"
+  }`}
+>
+  {language === "lt" ? "Slaptažodžiai" : "Password Resets"}
+</button>
               </div>
             )}
 
@@ -2369,19 +2520,21 @@ export default function App() {
       </nav>
 
       {loggedInUser.role === "ADMIN" ? (
-        adminPage === "dashboard" ? (
-          <AdminDashboard />
-        ) : adminPage === "manage" ? (
-          <ManageStudyPlanConfig />
-        ) : adminPage === "audit" ? (
-          <AuditLogs />
-        ) : (
-          <MaintenanceSettings
-            maintenanceStatus={maintenanceStatus}
-            onRefresh={fetchMaintenanceStatus}
-          />
-        )
-      ) : maintenanceStatus?.enabled ? (
+  adminPage === "dashboard" ? (
+    <AdminDashboard />
+  ) : adminPage === "manage" ? (
+    <ManageStudyPlanConfig />
+  ) : adminPage === "audit" ? (
+    <AuditLogs />
+  ) : adminPage === "maintenance" ? (
+    <MaintenanceSettings
+      maintenanceStatus={maintenanceStatus}
+      onRefresh={fetchMaintenanceStatus}
+    />
+  ) : (
+    <PasswordResetRequests />
+  )
+) : maintenanceStatus?.enabled ? (
         <Maintenance status={maintenanceStatus} />
       ) : maintenanceLoading ? (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-yellow-100 flex items-center justify-center p-8">
