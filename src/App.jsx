@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import schoolLogo from "./assets/didzdvario-logo.png";
+import schoolLogo from "./assets/didzdvariogimnazia.png";
 import AdminDashboard from "./AdminDashboard";
 import AuditLogs from "./AuditLogs";
 import Maintenance from "./Maintenance";
