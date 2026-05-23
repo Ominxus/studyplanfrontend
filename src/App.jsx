@@ -6,6 +6,7 @@ import AuditLogs from "./AuditLogs";
 import Maintenance from "./Maintenance";
 import MaintenanceSettings from "./MaintenanceSettings";
 import PasswordResetRequests from "./PasswordResetRequests";
+import Trademark from "./Trademark";
 import {
   GraduationCap,
   AlertTriangle,
@@ -2381,6 +2382,7 @@ export default function App() {
 
   if (!loggedInUser && authPage === "login") {
   return (
+    <>
     <LoginPage
       onLogin={setLoggedInUser}
       onGoToRegister={() => setAuthPage("register")}
@@ -2388,26 +2390,34 @@ export default function App() {
       language={language}
       setLanguage={setLanguage}
     />
+    <Trademark />
+    </>
   );
 }
 
   if (!loggedInUser && authPage === "register") {
     return (
+      <>
       <RegisterPage
         onRegisterSuccess={setLoggedInUser}
         onGoToLogin={() => setAuthPage("login")}
         language={language}
         setLanguage={setLanguage}
       />
+      <Trademark />
+      </>
     );
   }
   if (!loggedInUser && authPage === "forgotPassword") {
   return (
+    <>
     <ForgotPasswordPage
       onGoToLogin={() => setAuthPage("login")}
       language={language}
       setLanguage={setLanguage}
     />
+    <Trademark />
+    </>
   );
 }
   return (
@@ -2547,6 +2557,7 @@ export default function App() {
       ) : (
         <StudyPlanForm loggedInUser={loggedInUser} />
       )}
+      <Trademark />
     </div>
   );
 }
