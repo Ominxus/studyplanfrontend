@@ -44,7 +44,7 @@ const translations = {
       "Slaptažodyje turi būti bent viena didžioji raidė.",
     "Password must contain at least one special character.":
       "Slaptažodyje turi būti bent vienas specialus simbolis.",
-    "Password reset completed.": "Slaptažodis atstatytas.",
+    "Admin-set temporary passwords are securely hashed and emailed to the student. The student must change the password after logging in.": "Administratoriaus nustatyti laikini slaptažodžiai yra saugiai užšifruojami ir išsiunčiami mokiniui el. paštu. Prisijungęs mokinys privalo pakeisti slaptažodį.",
     "Password reset request denied.": "Slaptažodžio atstatymo prašymas atmestas.",
     "Could not load password reset requests.":
       "Nepavyko įkelti slaptažodžio atstatymo prašymų.",
@@ -165,7 +165,7 @@ export default function PasswordResetRequests() {
         }
       );
 
-      alert(response.data || t("Password reset completed."));
+      alert(response.data || t("Admin-set temporary passwords are securely hashed and emailed to the student. The student must change the password after logging in."));
 
       setPasswordsByRequest((prev) => ({
         ...prev,

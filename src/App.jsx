@@ -1992,6 +1992,169 @@ function ForgotPasswordPage({ onGoToLogin, language, setLanguage }) {
     </div>
   );
 }
+function ChangePasswordPage({
+  loggedInUser,
+  onPasswordChanged,
+  language,
+  setLanguage
+}) {
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+
+  const [error, setError] = useState("");
+
+  const CHANGE_PASSWORD_API = `${API_BASE_URL}/api/change-password`;
+
+  const getText = (en, lt) => (language === "lt" ? lt : en);
+
+  const handleChange = (e) => {
+    setPasswordData({
+      ...passwordData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+
+    if (!passwordData.currentPassword.trim()) {
+      setError(getText("Current password is required", "Dabartinis slaptažodis yra privalomas"));
+      return;
+    }
+
+    if (!passwordData.newPassword.trim()) {
+      setError(getText("New password is required", "Naujas slaptažodis yra privalomas"));
+      return;
+    }
+
+    if (passwordData.newPassword.length < 8) {
+      setError(getText("Password must be at least 8 characters long", "Slaptažodis turi būti bent 8 simbolių"));
+      return;
+    }
+
+    if (!/[A-Z]/.test(passwordData.newPassword)) {
+      setError(getText("Password must contain at least one capital letter", "Slaptažodyje turi būti bent viena didžioji raidė"));
+      return;
+    }
+
+    if (!/[^A-Za-z0-9]/.test(passwordData.newPassword)) {
+      setError(getText("Password must contain at least one special character", "Slaptažodyje turi būti bent vienas specialus simbolis"));
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setError(getText("Passwords do not match", "Slaptažodžiai nesutampa"));
+      return;
+    }
+
+    try {
+      await axios.post(CHANGE_PASSWORD_API, {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      });
+
+      alert(getText("Password changed successfully.", "Slaptažodis sėkmingai pakeistas."));
+      setError("");
+      onPasswordChanged();
+    } catch (error) {
+      console.error("Password change failed:", error);
+
+      if (error.response?.data) {
+        setError(
+          typeof error.response.data === "string"
+            ? error.response.data
+            : error.response.data.message || JSON.stringify(error.response.data)
+        );
+      } else {
+        setError(getText("Could not change password.", "Nepavyko pakeisti slaptažodžio."));
+      }
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-700 via-blue-500 to-yellow-300 flex items-center justify-center px-6 py-10 md:px-10 md:py-12 font-['Inter']">
+      <div className="absolute top-5 right-5">
+        <LanguageSwitch language={language} setLanguage={setLanguage} />
+      </div>
+
+      <div className="bg-white w-full max-w-md p-8 md:p-12 rounded-[2.5rem] shadow-2xl border-4 border-white">
+        <div className="text-center mb-8">
+          <div className="bg-yellow-300 text-blue-950 p-4 rounded-3xl inline-flex mb-5">
+            <ShieldCheck size={36} />
+          </div>
+
+          <h1 className="text-4xl font-black text-slate-900">
+            {getText("Change Password", "Pakeisti slaptažodį")}
+          </h1>
+
+          <p className="text-slate-500 mt-3">
+            {getText(
+              "Your password was reset by an admin. Please create a new password before continuing.",
+              "Jūsų slaptažodį atstatė administratorius. Prieš tęsdami susikurkite naują slaptažodį."
+            )}
+          </p>
+
+          <p className="text-sm font-black text-blue-700 mt-3">
+            {loggedInUser.username}
+          </p>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 border-2 border-red-200 text-red-700 p-4 rounded-2xl mb-6 font-bold">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleChangePassword} className="space-y-6">
+          <input
+            name="currentPassword"
+            type="password"
+            placeholder={getText("Temporary password", "Laikinas slaptažodis")}
+            value={passwordData.currentPassword}
+            onChange={handleChange}
+            className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
+          />
+
+          <input
+            name="newPassword"
+            type="password"
+            placeholder={getText("New password", "Naujas slaptažodis")}
+            value={passwordData.newPassword}
+            onChange={handleChange}
+            className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
+          />
+
+          <input
+            name="confirmPassword"
+            type="password"
+            placeholder={getText("Confirm new password", "Patvirtinti naują slaptažodį")}
+            value={passwordData.confirmPassword}
+            onChange={handleChange}
+            className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
+          />
+
+          <div className="bg-blue-50 border-2 border-blue-100 rounded-2xl p-4">
+            <p className="text-sm font-black text-slate-700 mb-2">
+              {getText("Password requirements:", "Slaptažodžio reikalavimai:")}
+            </p>
+            <ul className="text-xs font-bold text-slate-600 space-y-1">
+              <li>• {getText("At least 8 characters", "Bent 8 simboliai")}</li>
+              <li>• {getText("At least 1 capital letter", "Bent 1 didžioji raidė")}</li>
+              <li>• {getText("At least 1 special character", "Bent 1 specialus simbolis")}</li>
+            </ul>
+          </div>
+
+          <button className="w-full bg-blue-600 text-white p-4 rounded-2xl font-black hover:bg-blue-700 transition shadow-lg">
+            {getText("Change Password", "Pakeisti slaptažodį")}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
 function LoginPage({ onLogin, onGoToRegister,onGoToForgotPassword, language, setLanguage }) {
   const [loginData, setLoginData] = useState({
     username: "",
@@ -2140,6 +2303,7 @@ function RegisterPage({
 }) {
   const [registerData, setRegisterData] = useState({
     username: "",
+    email: "",
     password: "",
     confirmPassword: ""
   });
@@ -2158,6 +2322,7 @@ function RegisterPage({
 
     const username = registerData.username.trim();
     const password = registerData.password;
+    const email = registerData.email.trim();
 
     const usernameHasSpaces = /\s/.test(username);
     const passwordHasUppercase = /[A-Z]/.test(password);
@@ -2202,10 +2367,28 @@ function RegisterPage({
       setError("Passwords do not match");
       return;
     }
+    if (!email) {
+  setError(
+    language === "lt"
+      ? "El. paštas yra privalomas"
+      : "Email is required"
+  );
+  return;
+}
+
+if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  setError(
+    language === "lt"
+      ? "Įveskite teisingą el. pašto adresą"
+      : "Enter a valid email address"
+  );
+  return;
+}
 
     try {
       const response = await axios.post(`${AUTH_API}/register`, {
         username,
+        email,
         password
       });
 
@@ -2250,8 +2433,10 @@ function RegisterPage({
           <h1 className="text-5xl font-black text-slate-900">Register</h1>
 
           <p className="text-slate-500 mt-3">
-            Use your student number as your username.
-          </p>
+  {language === "lt"
+    ? "Naudokite mokinio numerį kaip vartotojo vardą ir įveskite savo el. paštą."
+    : "Use your student number as your username and enter your email address."}
+</p>
         </div>
 
         {error && (
@@ -2274,7 +2459,19 @@ function RegisterPage({
             }
             className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
           />
-
+          <input
+  name="email"
+  type="email"
+  placeholder={language === "lt" ? "El. paštas" : "Email address"}
+  value={registerData.email}
+  onChange={(e) =>
+    setRegisterData({
+      ...registerData,
+      email: e.target.value
+    })
+  }
+  className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
+/>
           <div>
             <input
               name="password"
