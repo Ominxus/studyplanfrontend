@@ -2617,6 +2617,24 @@ export default function App() {
     </>
   );
 }
+if (loggedInUser?.mustChangePassword) {
+  return (
+    <>
+      <ChangePasswordPage
+        loggedInUser={loggedInUser}
+        onPasswordChanged={() =>
+          setLoggedInUser({
+            ...loggedInUser,
+            mustChangePassword: false
+          })
+        }
+        language={language}
+        setLanguage={setLanguage}
+      />
+      <Trademark />
+    </>
+  );
+}
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-yellow-100 font-['Inter']">
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b-4 border-blue-100 shadow-sm">
