@@ -9,7 +9,9 @@ import {
   XCircle,
   User,
   Clock,
-  Save
+  Save,
+  Mail,
+  Copy
 } from "lucide-react";
 
 const PASSWORD_RESET_API = `${import.meta.env.VITE_API_BASE_URL}/api/password-reset`;
@@ -22,8 +24,8 @@ const translations = {
   lt: {
     "Password Reset Requests": "Slaptažodžio atstatymo prašymai",
     "Admin Password Reset": "Administratoriaus slaptažodžio atstatymas",
-    "View password reset requests from students and set a new password for their account.":
-      "Peržiūrėkite mokinių slaptažodžio atstatymo prašymus ir nustatykite naują slaptažodį jų paskyrai.",
+    "View password reset requests from students and set a temporary password for their account. The admin can then manually email the temporary password to the student.":
+      "Peržiūrėkite mokinių slaptažodžio atstatymo prašymus ir nustatykite laikiną slaptažodį jų paskyrai. Administratorius tada gali rankiniu būdu išsiųsti laikiną slaptažodį mokiniui el. paštu.",
     Refresh: "Atnaujinti",
     "Pending Requests": "Laukiantys prašymai",
     "Loading password reset requests...": "Įkeliami slaptažodžio atstatymo prašymai...",
@@ -31,12 +33,14 @@ const translations = {
     "When students request a password reset, they will appear here.":
       "Kai mokiniai pateiks slaptažodžio atstatymo prašymą, jie bus rodomi čia.",
     Username: "Vartotojo vardas",
+    Email: "El. paštas",
+    "No email provided": "El. paštas nenurodytas",
     "Requested At": "Prašymo laikas",
-    "New password": "Naujas slaptažodis",
-    "Confirm new password": "Patvirtinti naują slaptažodį",
+    "Temporary password": "Laikinas slaptažodis",
+    "Confirm temporary password": "Patvirtinti laikiną slaptažodį",
     "Complete Reset": "Atstatyti slaptažodį",
     Deny: "Atmesti",
-    "New password is required.": "Naujas slaptažodis yra privalomas.",
+    "New password is required.": "Laikinas slaptažodis yra privalomas.",
     "Passwords do not match.": "Slaptažodžiai nesutampa.",
     "Password must be at least 8 characters long.":
       "Slaptažodis turi būti bent 8 simbolių.",
@@ -44,7 +48,6 @@ const translations = {
       "Slaptažodyje turi būti bent viena didžioji raidė.",
     "Password must contain at least one special character.":
       "Slaptažodyje turi būti bent vienas specialus simbolis.",
-    "Admin-set temporary passwords are securely hashed and emailed to the student. The student must change the password after logging in.": "Administratoriaus nustatyti laikini slaptažodžiai yra saugiai užšifruojami ir išsiunčiami mokiniui el. paštu. Prisijungęs mokinys privalo pakeisti slaptažodį.",
     "Password reset request denied.": "Slaptažodžio atstatymo prašymas atmestas.",
     "Could not load password reset requests.":
       "Nepavyko įkelti slaptažodžio atstatymo prašymų.",
@@ -54,11 +57,18 @@ const translations = {
       "Nepavyko atmesti slaptažodžio atstatymo prašymo.",
     "Deny this password reset request?":
       "Ar atmesti šį slaptažodžio atstatymo prašymą?",
-    "Password requirements:":
-      "Slaptažodžio reikalavimai:",
+    "Password requirements:": "Slaptažodžio reikalavimai:",
     "At least 8 characters": "Bent 8 simboliai",
     "At least 1 capital letter": "Bent 1 didžioji raidė",
-    "At least 1 special character": "Bent 1 specialus simbolis"
+    "At least 1 special character": "Bent 1 specialus simbolis",
+    "Email text for admin:": "El. laiško tekstas administratoriui:",
+    "Copy Email Text": "Kopijuoti el. laiško tekstą",
+    "Email text copied.": "El. laiško tekstas nukopijuotas.",
+    "Could not copy email text.": "Nepavyko nukopijuoti el. laiško teksto.",
+    "Password reset completed. Please manually email the temporary password to:":
+      "Slaptažodis atstatytas. Rankiniu būdu išsiųskite laikiną slaptažodį šiuo el. paštu:",
+    "Admin-set temporary passwords are securely hashed. The admin must manually email the temporary password to the student using the displayed email address. The student will be forced to change the password after login.":
+      "Administratoriaus nustatyti laikini slaptažodžiai yra saugiai užšifruojami. Administratorius turi rankiniu būdu išsiųsti laikiną slaptažodį mokiniui nurodytu el. paštu. Prisijungęs mokinys privalės pakeisti slaptažodį."
   }
 };
 
@@ -90,6 +100,36 @@ function formatDateTime(value) {
   } catch {
     return value;
   }
+}
+
+function getEmailTemplate(temporaryPassword) {
+  const language = getLanguage();
+
+  if (language === "lt") {
+    return `Sveiki,
+
+Jūsų Study Plan System slaptažodis buvo atstatytas.
+
+Laikinas slaptažodis: ${temporaryPassword || "[laikinas slaptažodis]"}
+
+Prisijunkite naudodami šį laikiną slaptažodį. Prisijungus sistema paprašys susikurti naują slaptažodį.
+
+Jeigu neprašėte slaptažodžio atstatymo, susisiekite su mokyklos administratoriumi.
+
+Ačiū.`;
+  }
+
+  return `Hello,
+
+Your Study Plan System password has been reset.
+
+Temporary password: ${temporaryPassword || "[temporary password]"}
+
+Please log in using this temporary password. After logging in, the system will ask you to create a new password.
+
+If you did not request this password reset, please contact the school administrator.
+
+Thank you.`;
 }
 
 export default function PasswordResetRequests() {
@@ -146,7 +186,8 @@ export default function PasswordResetRequests() {
     return "";
   };
 
-  const completeReset = async (requestId) => {
+  const completeReset = async (request) => {
+    const requestId = request.id;
     const newPassword = passwordsByRequest[requestId] || "";
     const confirmPassword = confirmPasswordsByRequest[requestId] || "";
 
@@ -158,14 +199,15 @@ export default function PasswordResetRequests() {
     }
 
     try {
-      const response = await axios.post(
-        `${PASSWORD_RESET_API}/complete/${requestId}`,
-        {
-          newPassword
-        }
-      );
+      await axios.post(`${PASSWORD_RESET_API}/complete/${requestId}`, {
+        newPassword
+      });
 
-      alert(response.data || t("Admin-set temporary passwords are securely hashed and emailed to the student. The student must change the password after logging in."));
+      alert(
+        `${t(
+          "Password reset completed. Please manually email the temporary password to:"
+        )} ${request.email || t("No email provided")}`
+      );
 
       setPasswordsByRequest((prev) => ({
         ...prev,
@@ -198,6 +240,19 @@ export default function PasswordResetRequests() {
     }
   };
 
+  const copyEmailText = async (requestId) => {
+    const temporaryPassword = passwordsByRequest[requestId] || "";
+    const emailText = getEmailTemplate(temporaryPassword);
+
+    try {
+      await navigator.clipboard.writeText(emailText);
+      alert(t("Email text copied."));
+    } catch (error) {
+      console.error("Could not copy email text:", error);
+      alert(t("Could not copy email text."));
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-yellow-100 px-6 py-10 md:px-10 md:py-12 font-['Inter']">
       <div className="max-w-7xl mx-auto">
@@ -218,7 +273,7 @@ export default function PasswordResetRequests() {
 
               <p className="text-blue-50 mt-6 max-w-2xl text-lg">
                 {t(
-                  "View password reset requests from students and set a new password for their account."
+                  "View password reset requests from students and set a temporary password for their account. The admin can then manually email the temporary password to the student."
                 )}
               </p>
             </div>
@@ -302,87 +357,119 @@ export default function PasswordResetRequests() {
 
         {!loading && !error && requests.length > 0 && (
           <div className="space-y-6">
-            {requests.map((request) => (
-              <div
-                key={request.id}
-                className="bg-white border-4 border-blue-100 rounded-[2rem] shadow-xl p-6 md:p-7"
-              >
-                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-                  <div className="flex items-start gap-4">
-                    <div className="bg-yellow-300 text-blue-950 p-4 rounded-2xl">
-                      <User size={28} />
+            {requests.map((request) => {
+              const temporaryPassword = passwordsByRequest[request.id] || "";
+              const emailTemplate = getEmailTemplate(temporaryPassword);
+
+              return (
+                <div
+                  key={request.id}
+                  className="bg-white border-4 border-blue-100 rounded-[2rem] shadow-xl p-6 md:p-7"
+                >
+                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+                    <div className="flex items-start gap-4">
+                      <div className="bg-yellow-300 text-blue-950 p-4 rounded-2xl">
+                        <User size={28} />
+                      </div>
+
+                      <div>
+                        <h2 className="text-2xl font-black text-slate-900">
+                          {request.username}
+                        </h2>
+
+                        <div className="flex flex-wrap gap-3 mt-3 text-sm">
+                          <span className="inline-flex items-center gap-1 bg-blue-50 border-2 border-blue-100 px-3 py-1 rounded-full font-bold text-slate-700">
+                            <User size={14} />
+                            {t("Username")}: {request.username}
+                          </span>
+
+                          <span className="inline-flex items-center gap-1 bg-green-50 border-2 border-green-200 px-3 py-1 rounded-full font-bold text-green-700">
+                            <Mail size={14} />
+                            {t("Email")}:{" "}
+                            {request.email || t("No email provided")}
+                          </span>
+
+                          <span className="inline-flex items-center gap-1 bg-yellow-100 border-2 border-yellow-200 px-3 py-1 rounded-full font-bold text-slate-700">
+                            <Clock size={14} />
+                            {t("Requested At")}:{" "}
+                            {formatDateTime(request.requestedAt)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
 
-                    <div>
-                      <h2 className="text-2xl font-black text-slate-900">
-                        {request.username}
-                      </h2>
+                    <div className="w-full lg:max-w-xl">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <input
+                          type="password"
+                          placeholder={t("Temporary password")}
+                          value={passwordsByRequest[request.id] || ""}
+                          onChange={(e) =>
+                            setPasswordsByRequest({
+                              ...passwordsByRequest,
+                              [request.id]: e.target.value
+                            })
+                          }
+                          className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
+                        />
 
-                      <div className="flex flex-wrap gap-3 mt-3 text-sm">
-                        <span className="inline-flex items-center gap-1 bg-blue-50 border-2 border-blue-100 px-3 py-1 rounded-full font-bold text-slate-700">
-                          <User size={14} />
-                          {t("Username")}: {request.username}
-                        </span>
+                        <input
+                          type="password"
+                          placeholder={t("Confirm temporary password")}
+                          value={confirmPasswordsByRequest[request.id] || ""}
+                          onChange={(e) =>
+                            setConfirmPasswordsByRequest({
+                              ...confirmPasswordsByRequest,
+                              [request.id]: e.target.value
+                            })
+                          }
+                          className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
+                        />
+                      </div>
 
-                        <span className="inline-flex items-center gap-1 bg-yellow-100 border-2 border-yellow-200 px-3 py-1 rounded-full font-bold text-slate-700">
-                          <Clock size={14} />
-                          {t("Requested At")}:{" "}
-                          {formatDateTime(request.requestedAt)}
-                        </span>
+                      <div className="bg-blue-50 border-2 border-blue-100 rounded-2xl p-4 mb-4 text-sm">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                          <p className="font-black text-slate-800">
+                            {t("Email text for admin:")}
+                          </p>
+
+                          <button
+                            type="button"
+                            onClick={() => copyEmailText(request.id)}
+                            className="inline-flex items-center justify-center gap-2 bg-white border-2 border-blue-100 text-blue-700 px-4 py-2 rounded-2xl font-black hover:bg-blue-100 transition"
+                          >
+                            <Copy size={16} />
+                            {t("Copy Email Text")}
+                          </button>
+                        </div>
+
+                        <pre className="whitespace-pre-wrap text-slate-700 font-semibold font-sans bg-white/70 border border-blue-100 rounded-2xl p-4 max-h-64 overflow-y-auto">
+                          {emailTemplate}
+                        </pre>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <button
+                          onClick={() => completeReset(request)}
+                          className="flex-1 inline-flex items-center justify-center gap-2 bg-green-600 text-white px-5 py-4 rounded-2xl font-black hover:bg-green-700 transition"
+                        >
+                          <Save size={18} />
+                          {t("Complete Reset")}
+                        </button>
+
+                        <button
+                          onClick={() => denyReset(request.id)}
+                          className="flex-1 inline-flex items-center justify-center gap-2 bg-red-600 text-white px-5 py-4 rounded-2xl font-black hover:bg-red-700 transition"
+                        >
+                          <XCircle size={18} />
+                          {t("Deny")}
+                        </button>
                       </div>
                     </div>
                   </div>
-
-                  <div className="w-full lg:max-w-xl">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <input
-                        type="password"
-                        placeholder={t("New password")}
-                        value={passwordsByRequest[request.id] || ""}
-                        onChange={(e) =>
-                          setPasswordsByRequest({
-                            ...passwordsByRequest,
-                            [request.id]: e.target.value
-                          })
-                        }
-                        className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
-                      />
-
-                      <input
-                        type="password"
-                        placeholder={t("Confirm new password")}
-                        value={confirmPasswordsByRequest[request.id] || ""}
-                        onChange={(e) =>
-                          setConfirmPasswordsByRequest({
-                            ...confirmPasswordsByRequest,
-                            [request.id]: e.target.value
-                          })
-                        }
-                        className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white"
-                      />
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <button
-                        onClick={() => completeReset(request.id)}
-                        className="flex-1 inline-flex items-center justify-center gap-2 bg-green-600 text-white px-5 py-4 rounded-2xl font-black hover:bg-green-700 transition"
-                      >
-                        <Save size={18} />
-                        {t("Complete Reset")}
-                      </button>
-
-                      <button
-                        onClick={() => denyReset(request.id)}
-                        className="flex-1 inline-flex items-center justify-center gap-2 bg-red-600 text-white px-5 py-4 rounded-2xl font-black hover:bg-red-700 transition"
-                      >
-                        <XCircle size={18} />
-                        {t("Deny")}
-                      </button>
-                    </div>
-                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -391,7 +478,9 @@ export default function PasswordResetRequests() {
             <div className="flex items-center gap-3">
               <CheckCircle size={22} />
               <p className="font-black">
-                Admin-set passwords are saved securely using BCrypt hashing.
+                {t(
+                  "Admin-set temporary passwords are securely hashed. The admin must manually email the temporary password to the student using the displayed email address. The student will be forced to change the password after login."
+                )}
               </p>
             </div>
           </div>
