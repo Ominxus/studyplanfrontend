@@ -12,3 +12,16 @@ export const createCourse = async (course) => {
   const response = await axios.post(COURSE_API, course);
   return response.data;
 };
+
+export const updateCourse = async (courseId, course) => {
+  const response = await axios.put(
+    `${COURSE_API}/${courseId}`,
+    course
+  );
+
+  return response.data;
+};
+
+export const deactivateCourse = async (courseId) => {
+  await axios.delete(`${COURSE_API}/${courseId}`);
+};

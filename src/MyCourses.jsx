@@ -1,6 +1,19 @@
 import { useEffect, useState } from "react";
-import { BookOpen, Plus, RefreshCw } from "lucide-react";
-import { createCourse, getCourses } from "./services/courseService";
+import {
+  BookOpen,
+  Plus,
+  RefreshCw,
+  Pencil,
+  Trash2,
+  X
+} from "lucide-react";
+
+import {
+  createCourse,
+  getCourses,
+  updateCourse,
+  deactivateCourse
+} from "./services/courseService";
 
 export default function MyCourses() {
   const [courses, setCourses] = useState([]);
@@ -8,6 +21,7 @@ export default function MyCourses() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [editingCourseId, setEditingCourseId] = useState(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -16,6 +30,18 @@ export default function MyCourses() {
     priority: 3,
     notes: ""
   });
+
+  const resetForm = () => {
+    setForm({
+      name: "",
+      code: "",
+      difficulty: 3,
+      priority: 3,
+      notes: ""
+    });
+
+    setEditingCourseId(null);
+  };
 
   const loadCourses = async () => {
     try {
@@ -61,33 +87,111 @@ export default function MyCourses() {
       setError("");
       setSuccess("");
 
-      const createdCourse = await createCourse({
+      const courseData = {
         ...form,
         name: form.name.trim(),
         code: form.code.trim()
-      });
+      };
 
-      setCourses((current) => [...current, createdCourse]);
+      if (editingCourseId) {
+        const updatedCourse = await updateCourse(
+          editingCourseId,
+          courseData
+        );
 
-      setForm({
-        name: "",
-        code: "",
-        difficulty: 3,
-        priority: 3,
-        notes: ""
-      });
+        setCourses((current) =>
+          current.map((course) =>
+            course.id === editingCourseId
+              ? updatedCourse
+              : course
+          )
+        );
 
-      setSuccess("Course added successfully.");
+        setSuccess("Course updated successfully.");
+      } else {
+        const createdCourse = await createCourse(courseData);
+
+        setCourses((current) => [
+          ...current,
+          createdCourse
+        ]);
+
+        setSuccess("Course added successfully.");
+      }
+
+      resetForm();
     } catch (err) {
       console.error(err);
 
       setError(
         err.response?.data?.message ||
-          err.response?.data ||
-          "Could not add the course."
+          (typeof err.response?.data === "string"
+            ? err.response.data
+            : null) ||
+          "Could not save the course."
       );
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleEdit = (course) => {
+    setEditingCourseId(course.id);
+
+    setForm({
+      name: course.name,
+      code: course.code || "",
+      difficulty: course.difficulty,
+      priority: course.priority,
+      notes: course.notes || ""
+    });
+
+    setError("");
+    setSuccess("");
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  };
+
+  const handleCancelEdit = () => {
+    resetForm();
+    setError("");
+    setSuccess("");
+  };
+
+  const handleDeactivate = async (course) => {
+    const confirmed = window.confirm(
+      `Remove "${course.name}" from your active courses?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setError("");
+      setSuccess("");
+
+      await deactivateCourse(course.id);
+
+      setCourses((current) =>
+        current.filter((item) => item.id !== course.id)
+      );
+
+      if (editingCourseId === course.id) {
+        resetForm();
+      }
+
+      setSuccess("Course removed successfully.");
+    } catch (err) {
+      console.error(err);
+
+      setError(
+        err.response?.data?.message ||
+          "Could not remove the course."
+      );
     }
   };
 
@@ -126,16 +230,24 @@ export default function MyCourses() {
         <section className="bg-white border-2 border-blue-100 rounded-[2rem] p-7 shadow-lg">
           <div className="flex items-center gap-3 mb-7">
             <div className="bg-yellow-300 p-3 rounded-2xl">
-              <Plus size={22} />
+              {editingCourseId ? (
+                <Pencil size={22} />
+              ) : (
+                <Plus size={22} />
+              )}
             </div>
 
             <div>
               <h2 className="text-2xl font-black text-slate-900">
-                Add a course
+                {editingCourseId
+                  ? "Edit course"
+                  : "Add a course"}
               </h2>
 
               <p className="text-slate-500 text-sm">
-                Tell the planner what you are currently studying.
+                {editingCourseId
+                  ? "Update the information for this course."
+                  : "Tell the planner what you are currently studying."}
               </p>
             </div>
           </div>
@@ -224,13 +336,30 @@ export default function MyCourses() {
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full bg-blue-600 text-white p-4 rounded-2xl font-black hover:bg-blue-700 disabled:opacity-60 transition"
-            >
-              {saving ? "Adding course..." : "Add Course"}
-            </button>
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                disabled={saving}
+                className="flex-1 bg-blue-600 text-white p-4 rounded-2xl font-black hover:bg-blue-700 disabled:opacity-60 transition"
+              >
+                {saving
+                  ? "Saving..."
+                  : editingCourseId
+                  ? "Save Changes"
+                  : "Add Course"}
+              </button>
+
+              {editingCourseId && (
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="px-5 bg-slate-100 text-slate-700 rounded-2xl font-black hover:bg-slate-200"
+                  title="Cancel editing"
+                >
+                  <X size={20} />
+                </button>
+              )}
+            </div>
           </form>
         </section>
 
@@ -248,6 +377,7 @@ export default function MyCourses() {
             </div>
 
             <button
+              type="button"
               onClick={loadCourses}
               className="p-3 bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-100"
               title="Refresh courses"
@@ -257,7 +387,9 @@ export default function MyCourses() {
           </div>
 
           {loading ? (
-            <p className="text-slate-500">Loading courses...</p>
+            <p className="text-slate-500">
+              Loading courses...
+            </p>
           ) : courses.length === 0 ? (
             <div className="border-2 border-dashed border-blue-200 rounded-2xl p-10 text-center">
               <BookOpen
@@ -303,6 +435,7 @@ export default function MyCourses() {
                       <p className="text-xs text-slate-500 font-bold">
                         Difficulty
                       </p>
+
                       <p className="text-lg font-black text-slate-900">
                         {course.difficulty}/5
                       </p>
@@ -312,6 +445,7 @@ export default function MyCourses() {
                       <p className="text-xs text-slate-500 font-bold">
                         Priority
                       </p>
+
                       <p className="text-lg font-black text-slate-900">
                         {course.priority}/5
                       </p>
@@ -323,6 +457,26 @@ export default function MyCourses() {
                       {course.notes}
                     </p>
                   )}
+
+                  <div className="flex gap-3 mt-5">
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(course)}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-xl font-bold hover:bg-blue-200 transition"
+                    >
+                      <Pencil size={16} />
+                      Edit
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeactivate(course)}
+                      className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl font-bold hover:bg-red-100 transition"
+                    >
+                      <Trash2 size={16} />
+                      Remove
+                    </button>
+                  </div>
                 </article>
               ))}
             </div>
