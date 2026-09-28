@@ -7,6 +7,7 @@ import Maintenance from "./Maintenance";
 import MaintenanceSettings from "./MaintenanceSettings";
 import PasswordResetRequests from "./PasswordResetRequests";
 import Trademark from "./Trademark";
+import MyCourses from "./MyCourses";
 import {
   GraduationCap,
   AlertTriangle,
@@ -2551,6 +2552,7 @@ export default function App() {
   const [maintenanceLoading, setMaintenanceLoading] = useState(false);
   const [authPage, setAuthPage] = useState("login");
   const [adminPage, setAdminPage] = useState("dashboard");
+const [studentPage, setStudentPage] = useState("courses");
 
   usePageTranslation(language);
 
@@ -2714,7 +2716,31 @@ if (loggedInUser?.mustChangePassword) {
 </button>
               </div>
             )}
+{loggedInUser.role === "STUDENT" && (
+  <div className="flex flex-wrap bg-blue-50 border-2 border-blue-100 rounded-2xl p-1">
+    <button
+      onClick={() => setStudentPage("courses")}
+      className={`px-5 py-3 rounded-xl font-black transition ${
+        studentPage === "courses"
+          ? "bg-blue-600 text-white shadow"
+          : "text-blue-700 hover:bg-white"
+      }`}
+    >
+      My Courses
+    </button>
 
+    <button
+      onClick={() => setStudentPage("legacyPlan")}
+      className={`px-5 py-3 rounded-xl font-black transition ${
+        studentPage === "legacyPlan"
+          ? "bg-blue-600 text-white shadow"
+          : "text-blue-700 hover:bg-white"
+      }`}
+    >
+      Current Study Plan
+    </button>
+  </div>
+)}
             <LanguageSwitch language={language} setLanguage={setLanguage} />
 
             <div className="hidden sm:block text-right">
@@ -2744,7 +2770,7 @@ if (loggedInUser?.mustChangePassword) {
         </div>
       </nav>
 
-      {loggedInUser.role === "ADMIN" ? (
+     {loggedInUser.role === "ADMIN" ? (
   adminPage === "dashboard" ? (
     <AdminDashboard />
   ) : adminPage === "manage" ? (
@@ -2760,18 +2786,20 @@ if (loggedInUser?.mustChangePassword) {
     <PasswordResetRequests />
   )
 ) : maintenanceStatus?.enabled ? (
-        <Maintenance status={maintenanceStatus} />
-      ) : maintenanceLoading ? (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-yellow-100 flex items-center justify-center p-8">
-          <div className="bg-white border-4 border-blue-200 p-10 rounded-[2rem] shadow-2xl text-center">
-            <p className="font-black text-slate-900">
-              Checking maintenance status...
-            </p>
-          </div>
-        </div>
-      ) : (
-        <StudyPlanForm loggedInUser={loggedInUser} />
-      )}
+  <Maintenance status={maintenanceStatus} />
+) : maintenanceLoading ? (
+  <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-yellow-100 flex items-center justify-center p-8">
+    <div className="bg-white border-4 border-blue-200 p-10 rounded-[2rem] shadow-2xl text-center">
+      <p className="font-black text-slate-900">
+        Checking maintenance status...
+      </p>
+    </div>
+  </div>
+) : studentPage === "courses" ? (
+  <MyCourses />
+) : (
+  <StudyPlanForm loggedInUser={loggedInUser} />
+)}
       <Trademark />
     </div>
   );
