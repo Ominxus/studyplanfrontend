@@ -8,6 +8,7 @@ import MaintenanceSettings from "./MaintenanceSettings";
 import PasswordResetRequests from "./PasswordResetRequests";
 import Trademark from "./Trademark";
 import MyCourses from "./MyCourses";
+import MyDeadlines from "./MyDeadlines";
 import {
   GraduationCap,
   AlertTriangle,
@@ -2717,27 +2718,29 @@ if (loggedInUser?.mustChangePassword) {
               </div>
             )}
 {loggedInUser.role === "STUDENT" && (
-  <div className="flex flex-wrap bg-blue-50 border-2 border-blue-100 rounded-2xl p-1">
+  <div className="flex items-center gap-1 bg-blue-50 border border-blue-100 rounded-2xl p-1">
     <button
+      type="button"
       onClick={() => setStudentPage("courses")}
-      className={`px-5 py-3 rounded-xl font-black transition ${
+      className={`px-4 py-2 rounded-xl font-bold transition ${
         studentPage === "courses"
-          ? "bg-blue-600 text-white shadow"
-          : "text-blue-700 hover:bg-white"
+          ? "bg-blue-600 text-white shadow-sm"
+          : "text-blue-700 hover:bg-blue-100"
       }`}
     >
       My Courses
     </button>
 
     <button
-      onClick={() => setStudentPage("legacyPlan")}
-      className={`px-5 py-3 rounded-xl font-black transition ${
-        studentPage === "legacyPlan"
-          ? "bg-blue-600 text-white shadow"
-          : "text-blue-700 hover:bg-white"
+      type="button"
+      onClick={() => setStudentPage("deadlines")}
+      className={`px-4 py-2 rounded-xl font-bold transition ${
+        studentPage === "deadlines"
+          ? "bg-blue-600 text-white shadow-sm"
+          : "text-blue-700 hover:bg-blue-100"
       }`}
     >
-      Current Study Plan
+      Deadlines
     </button>
   </div>
 )}
@@ -2770,7 +2773,7 @@ if (loggedInUser?.mustChangePassword) {
         </div>
       </nav>
 
-     {loggedInUser.role === "ADMIN" ? (
+    {loggedInUser.role === "ADMIN" ? (
   adminPage === "dashboard" ? (
     <AdminDashboard />
   ) : adminPage === "manage" ? (
@@ -2795,10 +2798,10 @@ if (loggedInUser?.mustChangePassword) {
       </p>
     </div>
   </div>
-) : studentPage === "courses" ? (
-  <MyCourses />
+) : studentPage === "deadlines" ? (
+  <MyDeadlines />
 ) : (
-  <StudyPlanForm loggedInUser={loggedInUser} />
+  <MyCourses />
 )}
       <Trademark />
     </div>
