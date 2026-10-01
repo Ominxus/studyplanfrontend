@@ -22,3 +22,29 @@ export const createDeadline = async (deadline) => {
 
   return response.data;
 };
+
+export const updateDeadline = async (
+  deadlineId,
+  deadline
+) => {
+  const response = await axios.put(
+    `${DEADLINE_API}/${deadlineId}`,
+    deadline
+  );
+
+  return response.data;
+};
+
+export const completeDeadline = async (deadlineId) => {
+  const response = await axios.patch(
+    `${DEADLINE_API}/${deadlineId}/complete`
+  );
+
+  return response.data;
+};
+
+export const cancelDeadline = async (deadlineId) => {
+  await axios.delete(
+    `${DEADLINE_API}/${deadlineId}`
+  );
+};
