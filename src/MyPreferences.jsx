@@ -12,6 +12,7 @@ import {
   getPreferences,
   updatePreferences
 } from "./services/preferenceService";
+import DurationInput from "./components/DurationInput";
 
 export default function MyPreferences() {
   const [form, setForm] = useState({
@@ -226,16 +227,15 @@ export default function MyPreferences() {
                   <Clock3 size={18} />
                   Preferred session length
                 </label>
-
-                <input
-                  type="number"
-                  min="1"
-                  name="preferredSessionMinutes"
-                  value={form.preferredSessionMinutes}
-                  onChange={handleChange}
-                  className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl"
-                />
-
+<DurationInput
+  value={form.preferredSessionMinutes}
+  onChange={(value) =>
+    setForm((current) => ({
+      ...current,
+      preferredSessionMinutes: value
+    }))
+  }
+/>
                 <p className="text-xs text-slate-500 mt-2">
                   Your ideal focused study session,
                   in minutes.
@@ -248,14 +248,15 @@ export default function MyPreferences() {
                   Maximum session length
                 </label>
 
-                <input
-                  type="number"
-                  min="1"
-                  name="maximumSessionMinutes"
-                  value={form.maximumSessionMinutes}
-                  onChange={handleChange}
-                  className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl"
-                />
+                <DurationInput
+  value={form.maximumSessionMinutes}
+  onChange={(value) =>
+    setForm((current) => ({
+      ...current,
+      maximumSessionMinutes: value
+    }))
+  }
+/>
 
                 <p className="text-xs text-slate-500 mt-2">
                   The planner should not create a single
@@ -269,14 +270,15 @@ export default function MyPreferences() {
                   Break length
                 </label>
 
-                <input
-                  type="number"
-                  min="1"
-                  name="breakMinutes"
-                  value={form.breakMinutes}
-                  onChange={handleChange}
-                  className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl"
-                />
+                <DurationInput
+  value={form.breakMinutes}
+  onChange={(value) =>
+    setForm((current) => ({
+      ...current,
+      breakMinutes: value
+    }))
+  }
+/>
 
                 <p className="text-xs text-slate-500 mt-2">
                   Preferred break between study sessions.
@@ -319,14 +321,15 @@ export default function MyPreferences() {
                   Maximum daily study time
                 </label>
 
-                <input
-                  type="number"
-                  min="1"
-                  name="maximumDailyMinutes"
-                  value={form.maximumDailyMinutes}
-                  onChange={handleChange}
-                  className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl"
-                />
+                <DurationInput
+  value={form.maximumDailyMinutes}
+  onChange={(value) =>
+    setForm((current) => ({
+      ...current,
+      maximumDailyMinutes: value
+    }))
+  }
+/>
 
                 <p className="text-xs text-slate-500 mt-2">
                   Maximum total study time the planner

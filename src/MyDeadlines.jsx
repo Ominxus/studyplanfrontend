@@ -19,6 +19,7 @@ import {
   completeDeadline,
   cancelDeadline
 } from "./services/deadlineService";
+import DurationInput from "./components/DurationInput";
 
 export default function MyDeadlines() {
   const [courses, setCourses] = useState([]);
@@ -489,14 +490,15 @@ export default function MyDeadlines() {
                   Estimated work
                 </label>
 
-                <input
-                  type="number"
-                  min="1"
-                  name="estimatedMinutes"
-                  value={form.estimatedMinutes}
-                  onChange={handleChange}
-                  className="w-full p-4 bg-blue-50 border-2 border-blue-100 rounded-2xl"
-                />
+                <DurationInput
+  value={form.estimatedMinutes}
+  onChange={(value) =>
+    setForm((current) => ({
+      ...current,
+      estimatedMinutes: value
+    }))
+  }
+/>
 
                 <p className="text-xs text-slate-500 mt-2">
                   Enter the estimated number of minutes
