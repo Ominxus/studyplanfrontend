@@ -10,6 +10,7 @@ import Trademark from "./Trademark";
 import MyCourses from "./MyCourses";
 import MyDeadlines from "./MyDeadlines";
 import MyAvailability from "./MyAvailability";
+import MyPreferences from "./MyPreferences";
 import {
   GraduationCap,
   AlertTriangle,
@@ -2755,6 +2756,18 @@ if (loggedInUser?.mustChangePassword) {
     >
       Availability
     </button>
+
+    <button
+      type="button"
+      onClick={() => setStudentPage("preferences")}
+      className={`px-4 py-2 rounded-xl font-bold transition ${
+        studentPage === "preferences"
+          ? "bg-blue-600 text-white shadow-sm"
+          : "text-blue-700 hover:bg-blue-100"
+      }`}
+    >
+      Preferences
+    </button>
   </div>
 )}
             <LanguageSwitch language={language} setLanguage={setLanguage} />
@@ -2815,6 +2828,8 @@ if (loggedInUser?.mustChangePassword) {
   <MyDeadlines />
 ) : studentPage === "availability" ? (
   <MyAvailability />
+) : studentPage === "preferences" ? (
+  <MyPreferences />
 ) : (
   <MyCourses />
 )}
