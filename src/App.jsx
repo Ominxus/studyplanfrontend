@@ -11,6 +11,7 @@ import MyCourses from "./MyCourses";
 import MyDeadlines from "./MyDeadlines";
 import MyAvailability from "./MyAvailability";
 import MyPreferences from "./MyPreferences";
+import MyGoals from "./MyGoals";
 import {
   GraduationCap,
   AlertTriangle,
@@ -1934,7 +1935,6 @@ function ForgotPasswordPage({ onGoToLogin, language, setLanguage }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-700 via-blue-500 to-yellow-300 flex items-center justify-center px-6 py-10 md:px-10 md:py-12 font-['Inter']">
       <div className="absolute top-5 right-5">
-        <LanguageSwitch language={language} setLanguage={setLanguage} />
       </div>
 
       <div className="bg-white w-full max-w-md p-8 md:p-12 rounded-[2.5rem] shadow-2xl border-4 border-white">
@@ -2081,7 +2081,7 @@ function ChangePasswordPage({
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-700 via-blue-500 to-yellow-300 flex items-center justify-center px-6 py-10 md:px-10 md:py-12 font-['Inter']">
       <div className="absolute top-5 right-5">
-        <LanguageSwitch language={language} setLanguage={setLanguage} />
+        
       </div>
 
       <div className="bg-white w-full max-w-md p-8 md:p-12 rounded-[2.5rem] shadow-2xl border-4 border-white">
@@ -2197,7 +2197,7 @@ function LoginPage({ onLogin, onGoToRegister,onGoToForgotPassword, language, set
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-700 via-blue-500 to-yellow-300 flex items-center justify-center px-6 py-10 md:px-10 md:py-12 font-['Inter']">
       <div className="absolute top-5 right-5">
-        <LanguageSwitch language={language} setLanguage={setLanguage} />
+        
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 max-w-6xl w-full bg-white rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white">
@@ -2421,7 +2421,7 @@ if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-700 via-blue-500 to-yellow-300 flex items-center justify-center px-6 py-10 md:px-10 md:py-12 font-['Inter']">
       <div className="absolute top-5 right-5">
-        <LanguageSwitch language={language} setLanguage={setLanguage} />
+        
       </div>
 
       <div className="bg-white w-full max-w-md p-8 md:p-12 rounded-[2.5rem] shadow-2xl border-4 border-white">
@@ -2547,9 +2547,7 @@ export default function App() {
     }
   });
 
-  const [language, setLanguage] = useState(() => {
-    return localStorage.getItem("language") || "en";
-  });
+  const [language, setLanguage] = useState("en");
 
   const [maintenanceStatus, setMaintenanceStatus] = useState(null);
   const [maintenanceLoading, setMaintenanceLoading] = useState(false);
@@ -2768,9 +2766,21 @@ if (loggedInUser?.mustChangePassword) {
     >
       Preferences
     </button>
+
+    <button
+      type="button"
+      onClick={() => setStudentPage("goals")}
+      className={`px-4 py-2 rounded-xl font-bold transition ${
+        studentPage === "goals"
+          ? "bg-blue-600 text-white shadow-sm"
+          : "text-blue-700 hover:bg-blue-100"
+      }`}
+    >
+      Goals
+    </button>
   </div>
 )}
-            <LanguageSwitch language={language} setLanguage={setLanguage} />
+            
 
             <div className="hidden sm:block text-right">
               <p className="text-sm font-black text-slate-900">
@@ -2830,6 +2840,8 @@ if (loggedInUser?.mustChangePassword) {
   <MyAvailability />
 ) : studentPage === "preferences" ? (
   <MyPreferences />
+) : studentPage === "goals" ? (
+  <MyGoals />
 ) : (
   <MyCourses />
 )}
