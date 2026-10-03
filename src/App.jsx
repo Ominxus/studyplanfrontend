@@ -2642,7 +2642,7 @@ if (loggedInUser?.mustChangePassword) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-yellow-100 font-['Inter']">
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b-4 border-blue-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 md:px-10 py-5 flex flex-col md:flex-row md:justify-between md:items-center gap-5">
+        <div className="max-w-[1500px] mx-auto px-4 md:px-6 py-4 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
           <div className="flex items-center gap-4">
             <div className="bg-blue-600 text-white p-3 rounded-2xl">
               <GraduationCap size={24} />
@@ -2660,7 +2660,7 @@ if (loggedInUser?.mustChangePassword) {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap lg:flex-nowrap items-center gap-2">
             {loggedInUser.role === "ADMIN" && (
               <div className="flex flex-wrap bg-blue-50 border-2 border-blue-100 rounded-2xl p-1">
                 <button
@@ -2719,11 +2719,11 @@ if (loggedInUser?.mustChangePassword) {
               </div>
             )}
 {loggedInUser.role === "STUDENT" && (
-  <div className="flex items-center gap-1 bg-blue-50 border border-blue-100 rounded-2xl p-1">
+  <div className="flex flex-wrap lg:flex-nowrap items-center gap-1 bg-blue-50 border border-blue-100 rounded-2xl p-1">
     <button
       type="button"
       onClick={() => setStudentPage("courses")}
-      className={`px-4 py-2 rounded-xl font-bold transition ${
+      className={`px-3 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition ${
         studentPage === "courses"
           ? "bg-blue-600 text-white shadow-sm"
           : "text-blue-700 hover:bg-blue-100"
@@ -2735,7 +2735,7 @@ if (loggedInUser?.mustChangePassword) {
     <button
       type="button"
       onClick={() => setStudentPage("deadlines")}
-      className={`px-4 py-2 rounded-xl font-bold transition ${
+      className={`px-3 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition ${
         studentPage === "deadlines"
           ? "bg-blue-600 text-white shadow-sm"
           : "text-blue-700 hover:bg-blue-100"
@@ -2747,7 +2747,7 @@ if (loggedInUser?.mustChangePassword) {
     <button
       type="button"
       onClick={() => setStudentPage("availability")}
-      className={`px-4 py-2 rounded-xl font-bold transition ${
+      className={`px-3 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition ${
         studentPage === "availability"
           ? "bg-blue-600 text-white shadow-sm"
           : "text-blue-700 hover:bg-blue-100"
@@ -2759,7 +2759,7 @@ if (loggedInUser?.mustChangePassword) {
     <button
       type="button"
       onClick={() => setStudentPage("preferences")}
-      className={`px-4 py-2 rounded-xl font-bold transition ${
+      className={`px-3 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition ${
         studentPage === "preferences"
           ? "bg-blue-600 text-white shadow-sm"
           : "text-blue-700 hover:bg-blue-100"
@@ -2771,7 +2771,7 @@ if (loggedInUser?.mustChangePassword) {
     <button
       type="button"
       onClick={() => setStudentPage("goals")}
-      className={`px-4 py-2 rounded-xl font-bold transition ${
+      className={`px-3 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition ${
         studentPage === "goals"
           ? "bg-blue-600 text-white shadow-sm"
           : "text-blue-700 hover:bg-blue-100"
@@ -2783,7 +2783,7 @@ if (loggedInUser?.mustChangePassword) {
     <button
       type="button"
       onClick={() => setStudentPage("study-plan")}
-      className={`px-4 py-2 rounded-xl font-bold transition ${
+      className={`px-3 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition ${
         studentPage === "study-plan"
           ? "bg-blue-600 text-white shadow-sm"
           : "text-blue-700 hover:bg-blue-100"
@@ -2813,7 +2813,7 @@ if (loggedInUser?.mustChangePassword) {
                 setAuthPage("login");
                 setAdminPage("dashboard");
               }}
-              className="inline-flex items-center gap-2 px-5 py-3 bg-yellow-300 text-blue-950 rounded-2xl font-black hover:bg-yellow-400 transition"
+              className="inline-flex shrink-0 items-center gap-2 px-4 py-2.5 bg-yellow-300 text-blue-950 rounded-2xl font-black hover:bg-yellow-400 transition"
             >
               <LogOut size={18} />
               Logout
