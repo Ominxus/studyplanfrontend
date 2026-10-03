@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
+
 import {
+  completeStudySession,
   generateStudyPlan,
   getLatestStudyPlan,
 } from "./services/studyPlanService";
+
+import DurationInput from "./components/DurationInput";
 
 function toDateInputValue(date) {
   const year = date.getFullYear();
@@ -27,6 +31,7 @@ function getDefaultDates() {
 
 function formatDuration(minutes) {
   const total = Number(minutes) || 0;
+
   const hours = Math.floor(total / 60);
   const remainingMinutes = total % 60;
 
@@ -42,7 +47,9 @@ function formatDuration(minutes) {
 }
 
 function formatTime(dateTime) {
-  if (!dateTime) return "";
+  if (!dateTime) {
+    return "";
+  }
 
   return new Date(dateTime).toLocaleTimeString([], {
     hour: "2-digit",
@@ -69,7 +76,9 @@ function formatDayHeading(dateString) {
 }
 
 function formatPlanDate(dateString) {
-  if (!dateString) return "";
+  if (!dateString) {
+    return "";
+  }
 
   const [year, month, day] = dateString
     .split("-")
@@ -96,31 +105,152 @@ function getErrorMessage(error) {
   );
 }
 
+function SessionProgress({
+  session,
+  onCompleted,
+}) {
+  const [actualMinutes, setActualMinutes] =
+    useState(
+      session.actualMinutes ||
+        session.plannedMinutes ||
+        60
+    );
+
+  const [saving, setSaving] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  const handleComplete = async () => {
+    setError("");
+
+    if (
+      !actualMinutes ||
+      Number(actualMinutes) <= 0
+    ) {
+      setError(
+        "Please enter the time you actually studied."
+      );
+
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const updatedSession =
+        await completeStudySession(
+          session.id,
+          Number(actualMinutes)
+        );
+
+      onCompleted(updatedSession);
+    } catch (error) {
+      setError(
+        getErrorMessage(error)
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (
+    session.status === "COMPLETED"
+  ) {
+    return (
+      <div className="mt-4 rounded-2xl border border-green-200 bg-green-50 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="font-black text-green-800">
+              ✓ Session completed
+            </p>
+
+            <p className="mt-1 text-sm font-medium text-green-700">
+              Actual study time:{" "}
+              {formatDuration(
+                session.actualMinutes ||
+                  session.plannedMinutes
+              )}
+            </p>
+          </div>
+
+          <span className="rounded-full bg-green-200 px-3 py-1 text-xs font-black text-green-800">
+            COMPLETED
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+      <p className="text-sm font-black text-gray-800">
+        Finished this study session?
+      </p>
+
+      <p className="mt-1 text-xs text-gray-500">
+        Record how long you actually studied.
+      </p>
+
+      <div className="mt-4">
+        <DurationInput
+          value={actualMinutes}
+          onChange={setActualMinutes}
+          disabled={saving}
+        />
+      </div>
+
+      <button
+        type="button"
+        onClick={handleComplete}
+        disabled={saving}
+        className="mt-4 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-black text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {saving
+          ? "Saving..."
+          : "Mark as Complete"}
+      </button>
+
+      {error && (
+        <p className="mt-3 text-sm font-semibold text-red-600">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function MyStudyPlan() {
-  const defaults = useMemo(
-    () => getDefaultDates(),
-    []
-  );
+  const defaults =
+    useMemo(
+      () => getDefaultDates(),
+      []
+    );
 
-  const [planName, setPlanName] = useState(
-    "My Study Plan"
-  );
+  const [planName, setPlanName] =
+    useState("My Study Plan");
 
-  const [startDate, setStartDate] = useState(
-    defaults.startDate
-  );
+  const [startDate, setStartDate] =
+    useState(defaults.startDate);
 
-  const [endDate, setEndDate] = useState(
-    defaults.endDate
-  );
+  const [endDate, setEndDate] =
+    useState(defaults.endDate);
 
-  const [plan, setPlan] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [plan, setPlan] =
+    useState(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
   const [generating, setGenerating] =
     useState(false);
 
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const [error, setError] =
+    useState("");
+
+  const [message, setMessage] =
+    useState("");
 
   useEffect(() => {
     loadLatestPlan();
@@ -131,18 +261,26 @@ export default function MyStudyPlan() {
     setError("");
 
     try {
-      const data = await getLatestStudyPlan();
+      const data =
+        await getLatestStudyPlan();
+
       setPlan(data);
     } catch (error) {
-      if (error?.response?.status !== 404) {
-        setError(getErrorMessage(error));
+      if (
+        error?.response?.status !== 404
+      ) {
+        setError(
+          getErrorMessage(error)
+        );
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGenerate = async (event) => {
+  const handleGenerate = async (
+    event
+  ) => {
     event.preventDefault();
 
     setError("");
@@ -152,6 +290,7 @@ export default function MyStudyPlan() {
       setError(
         "Please choose both a start date and an end date."
       );
+
       return;
     }
 
@@ -159,6 +298,7 @@ export default function MyStudyPlan() {
       setError(
         "The end date cannot be before the start date."
       );
+
       return;
     }
 
@@ -167,62 +307,156 @@ export default function MyStudyPlan() {
     try {
       const generatedPlan =
         await generateStudyPlan({
-          planName: planName.trim(),
+          planName:
+            planName.trim(),
           startDate,
           endDate,
         });
 
-      setPlan(generatedPlan);
+      setPlan(
+        generatedPlan
+      );
 
       setMessage(
         "Your personalized study plan was generated successfully."
       );
     } catch (error) {
-      setError(getErrorMessage(error));
+      setError(
+        getErrorMessage(error)
+      );
     } finally {
       setGenerating(false);
     }
   };
 
+  const handleSessionCompleted = (
+    updatedSession
+  ) => {
+    setPlan(
+      (currentPlan) => {
+        if (!currentPlan) {
+          return currentPlan;
+        }
+
+        return {
+          ...currentPlan,
+
+          sessions:
+            currentPlan.sessions.map(
+              (session) =>
+                session.id ===
+                updatedSession.id
+                  ? updatedSession
+                  : session
+            ),
+        };
+      }
+    );
+
+    setError("");
+
+    setMessage(
+      "Study session completed successfully."
+    );
+  };
+
+  const sessions =
+    plan?.sessions || [];
+
   const totalMinutes =
-    plan?.sessions?.reduce(
+    sessions.reduce(
       (sum, session) =>
-        sum + (session.plannedMinutes || 0),
+        sum +
+        (
+          session.plannedMinutes ||
+          0
+        ),
       0
-    ) || 0;
+    );
 
-  const groupedSessions = useMemo(() => {
-    if (!plan?.sessions) {
-      return [];
-    }
+  const completedSessions =
+    sessions.filter(
+      (session) =>
+        session.status ===
+        "COMPLETED"
+    );
 
-    const groups = {};
+  const completedCount =
+    completedSessions.length;
 
-    for (const session of plan.sessions) {
-      const date =
-        session.startAt?.split("T")[0];
+  const actualMinutes =
+    completedSessions.reduce(
+      (sum, session) =>
+        sum +
+        (
+          session.actualMinutes ||
+          session.plannedMinutes ||
+          0
+        ),
+      0
+    );
 
-      if (!date) continue;
+  const progressPercentage =
+    sessions.length > 0
+      ? Math.round(
+          (
+            completedCount /
+            sessions.length
+          ) * 100
+        )
+      : 0;
 
-      if (!groups[date]) {
-        groups[date] = [];
+  const groupedSessions =
+    useMemo(() => {
+      if (!plan?.sessions) {
+        return [];
       }
 
-      groups[date].push(session);
-    }
+      const groups = {};
 
-    return Object.entries(groups)
-      .sort(([dateA], [dateB]) =>
-        dateA.localeCompare(dateB)
-      )
-      .map(([date, sessions]) => ({
-        date,
-        sessions: [...sessions].sort(
-          (a, b) =>
-            a.startAt.localeCompare(b.startAt)
-        ),
-      }));
-  }, [plan]);
+      for (
+        const session
+        of plan.sessions
+      ) {
+        const date =
+          session.startAt?.split(
+            "T"
+          )[0];
+
+        if (!date) {
+          continue;
+        }
+
+        if (!groups[date]) {
+          groups[date] = [];
+        }
+
+        groups[date].push(
+          session
+        );
+      }
+
+      return Object.entries(groups)
+        .sort(
+          ([dateA], [dateB]) =>
+            dateA.localeCompare(
+              dateB
+            )
+        )
+        .map(
+          ([date, sessions]) => ({
+            date,
+
+            sessions:
+              [...sessions].sort(
+                (a, b) =>
+                  a.startAt.localeCompare(
+                    b.startAt
+                  )
+              ),
+          })
+        );
+    }, [plan]);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -236,8 +470,9 @@ export default function MyStudyPlan() {
         </h1>
 
         <p className="mt-3 max-w-2xl text-blue-100">
-          Generate a personalized study schedule using
-          your courses, deadlines, goals, availability,
+          Generate a personalized study
+          schedule using your courses,
+          deadlines, goals, availability,
           and study preferences.
         </p>
       </section>
@@ -249,8 +484,8 @@ export default function MyStudyPlan() {
           </h2>
 
           <p className="mt-1 text-sm text-gray-500">
-            Choose the period you want the planner to
-            organize.
+            Choose the period you want
+            the planner to organize.
           </p>
 
           <form
@@ -266,7 +501,9 @@ export default function MyStudyPlan() {
                 type="text"
                 value={planName}
                 onChange={(event) =>
-                  setPlanName(event.target.value)
+                  setPlanName(
+                    event.target.value
+                  )
                 }
                 maxLength={150}
                 placeholder="My Study Plan"
@@ -283,7 +520,9 @@ export default function MyStudyPlan() {
                 type="date"
                 value={startDate}
                 onChange={(event) =>
-                  setStartDate(event.target.value)
+                  setStartDate(
+                    event.target.value
+                  )
                 }
                 className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
@@ -298,7 +537,9 @@ export default function MyStudyPlan() {
                 type="date"
                 value={endDate}
                 onChange={(event) =>
-                  setEndDate(event.target.value)
+                  setEndDate(
+                    event.target.value
+                  )
                 }
                 className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
@@ -332,20 +573,24 @@ export default function MyStudyPlan() {
           {loading ? (
             <div className="rounded-3xl border border-gray-200 bg-white p-8 text-center shadow-sm">
               <p className="font-semibold text-gray-500">
-                Loading your latest study plan...
+                Loading your latest
+                study plan...
               </p>
             </div>
           ) : !plan ? (
             <div className="rounded-3xl border border-dashed border-gray-300 bg-white p-10 text-center">
-              <div className="text-4xl">📅</div>
+              <div className="text-4xl">
+                📅
+              </div>
 
               <h2 className="mt-4 text-xl font-black text-gray-900">
                 No study plan yet
               </h2>
 
               <p className="mt-2 text-gray-500">
-                Choose a planning period and generate your
-                first personalized schedule.
+                Choose a planning period
+                and generate your first
+                personalized schedule.
               </p>
             </div>
           ) : (
@@ -355,7 +600,9 @@ export default function MyStudyPlan() {
                   <div>
                     <div className="mb-2 flex flex-wrap gap-2">
                       <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">
-                        {plan.generationMethod}
+                        {
+                          plan.generationMethod
+                        }
                       </span>
 
                       <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
@@ -368,16 +615,20 @@ export default function MyStudyPlan() {
                     </h2>
 
                     <p className="mt-1 text-sm font-medium text-gray-500">
-                      {formatPlanDate(plan.startDate)}
+                      {formatPlanDate(
+                        plan.startDate
+                      )}
                       {" – "}
-                      {formatPlanDate(plan.endDate)}
+                      {formatPlanDate(
+                        plan.endDate
+                      )}
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-3 gap-3">
                     <div className="rounded-2xl bg-gray-50 px-4 py-3 text-center">
                       <div className="text-xl font-black text-gray-900">
-                        {plan.sessions?.length || 0}
+                        {sessions.length}
                       </div>
 
                       <div className="text-xs font-bold uppercase tracking-wide text-gray-500">
@@ -387,14 +638,62 @@ export default function MyStudyPlan() {
 
                     <div className="rounded-2xl bg-gray-50 px-4 py-3 text-center">
                       <div className="text-xl font-black text-gray-900">
-                        {formatDuration(totalMinutes)}
+                        {formatDuration(
+                          totalMinutes
+                        )}
                       </div>
 
                       <div className="text-xs font-bold uppercase tracking-wide text-gray-500">
                         Planned
                       </div>
                     </div>
+
+                    <div className="rounded-2xl bg-green-50 px-4 py-3 text-center">
+                      <div className="text-xl font-black text-green-800">
+                        {completedCount}/
+                        {sessions.length}
+                      </div>
+
+                      <div className="text-xs font-bold uppercase tracking-wide text-green-700">
+                        Completed
+                      </div>
+                    </div>
                   </div>
+                </div>
+
+                <div className="mt-5">
+                  <div className="mb-2 flex items-center justify-between text-sm font-bold">
+                    <span className="text-gray-700">
+                      Plan progress
+                    </span>
+
+                    <span className="text-blue-700">
+                      {
+                        progressPercentage
+                      }
+                      %
+                    </span>
+                  </div>
+
+                  <div className="h-3 overflow-hidden rounded-full bg-gray-100">
+                    <div
+                      className="h-full rounded-full bg-blue-600 transition-all"
+                      style={{
+                        width: `${progressPercentage}%`,
+                      }}
+                    />
+                  </div>
+
+                  {completedCount >
+                    0 && (
+                    <p className="mt-2 text-xs font-medium text-gray-500">
+                      Actual study time
+                      completed:{" "}
+                      {formatDuration(
+                        actualMinutes
+                      )}
+                    </p>
+                  )}
                 </div>
 
                 {plan.summary && (
@@ -404,91 +703,125 @@ export default function MyStudyPlan() {
                 )}
               </section>
 
-              {groupedSessions.length === 0 ? (
+              {groupedSessions.length ===
+              0 ? (
                 <div className="rounded-3xl border border-gray-200 bg-white p-8 text-center">
                   <p className="font-semibold text-gray-500">
-                    This plan does not contain any study
+                    This plan does not
+                    contain any study
                     sessions.
                   </p>
                 </div>
               ) : (
                 groupedSessions.map(
-                  ({ date, sessions }) => (
+                  ({
+                    date,
+                    sessions,
+                  }) => (
                     <section
                       key={date}
                       className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm"
                     >
                       <div className="mb-5 flex items-center justify-between border-b border-gray-100 pb-4">
                         <h3 className="text-lg font-black text-gray-900">
-                          {formatDayHeading(date)}
+                          {formatDayHeading(
+                            date
+                          )}
                         </h3>
 
                         <span className="text-sm font-semibold text-gray-500">
-                          {sessions.length}{" "}
-                          {sessions.length === 1
+                          {
+                            sessions.length
+                          }{" "}
+                          {sessions.length ===
+                          1
                             ? "session"
                             : "sessions"}
                         </span>
                       </div>
 
                       <div className="space-y-4">
-                        {sessions.map((session) => (
-                          <article
-                            key={session.id}
-                            className="rounded-2xl border border-gray-200 p-5 transition hover:border-blue-200 hover:shadow-sm"
-                          >
-                            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                              <div>
-                                <p className="text-sm font-black text-blue-600">
-                                  {formatTime(
-                                    session.startAt
-                                  )}
-                                  {" – "}
-                                  {formatTime(
-                                    session.endAt
-                                  )}
-                                </p>
+                        {sessions.map(
+                          (session) => (
+                            <article
+                              key={
+                                session.id
+                              }
+                              className={`rounded-2xl border p-5 transition ${
+                                session.status ===
+                                "COMPLETED"
+                                  ? "border-green-200 bg-green-50/20"
+                                  : "border-gray-200 hover:border-blue-200 hover:shadow-sm"
+                              }`}
+                            >
+                              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                  <p className="text-sm font-black text-blue-600">
+                                    {formatTime(
+                                      session.startAt
+                                    )}
+                                    {" – "}
+                                    {formatTime(
+                                      session.endAt
+                                    )}
+                                  </p>
 
-                                <h4 className="mt-1 text-lg font-black text-gray-900">
-                                  {session.courseName ||
-                                    session.title}
-                                </h4>
+                                  <h4 className="mt-1 text-lg font-black text-gray-900">
+                                    {session.courseName ||
+                                      session.title}
+                                  </h4>
 
-                                {session.deadlineTitle && (
-                                  <p className="mt-1 font-semibold text-gray-600">
+                                  {session.deadlineTitle && (
+                                    <p className="mt-1 font-semibold text-gray-600">
+                                      {
+                                        session.deadlineTitle
+                                      }
+                                    </p>
+                                  )}
+                                </div>
+
+                                <span className="w-fit rounded-xl bg-gray-100 px-3 py-2 text-sm font-black text-gray-700">
+                                  {formatDuration(
+                                    session.plannedMinutes
+                                  )}
+                                </span>
+                              </div>
+
+                              {session.goalTitle && (
+                                <div className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+                                  🎯{" "}
+                                  {
+                                    session.goalTitle
+                                  }
+                                </div>
+                              )}
+
+                              {session.rationale && (
+                                <details className="mt-4">
+                                  <summary className="cursor-pointer text-sm font-bold text-blue-700">
+                                    Why was this
+                                    scheduled?
+                                  </summary>
+
+                                  <p className="mt-3 rounded-xl bg-gray-50 px-4 py-3 text-sm leading-relaxed text-gray-600">
                                     {
-                                      session.deadlineTitle
+                                      session.rationale
                                     }
                                   </p>
-                                )}
-                              </div>
+                                </details>
+                              )}
 
-                              <span className="w-fit rounded-xl bg-gray-100 px-3 py-2 text-sm font-black text-gray-700">
-                                {formatDuration(
-                                  session.plannedMinutes
-                                )}
-                              </span>
-                            </div>
-
-                            {session.goalTitle && (
-                              <div className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
-                                🎯 {session.goalTitle}
-                              </div>
-                            )}
-
-                            {session.rationale && (
-                              <details className="mt-4">
-                                <summary className="cursor-pointer text-sm font-bold text-blue-700">
-                                  Why was this scheduled?
-                                </summary>
-
-                                <p className="mt-3 rounded-xl bg-gray-50 px-4 py-3 text-sm leading-relaxed text-gray-600">
-                                  {session.rationale}
-                                </p>
-                              </details>
-                            )}
-                          </article>
-                        ))}
+                              <SessionProgress
+                                session={
+                                  session
+                                }
+                                onCompleted={
+                                  handleSessionCompleted
+                                }
+                              />
+                            </article>
+                          )
+                        )}
                       </div>
                     </section>
                   )
