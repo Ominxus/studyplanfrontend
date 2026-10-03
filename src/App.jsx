@@ -12,6 +12,7 @@ import MyDeadlines from "./MyDeadlines";
 import MyAvailability from "./MyAvailability";
 import MyPreferences from "./MyPreferences";
 import MyGoals from "./MyGoals";
+import MyStudyPlan from "./MyStudyPlan";
 import {
   GraduationCap,
   AlertTriangle,
@@ -2778,6 +2779,18 @@ if (loggedInUser?.mustChangePassword) {
     >
       Goals
     </button>
+
+    <button
+      type="button"
+      onClick={() => setStudentPage("study-plan")}
+      className={`px-4 py-2 rounded-xl font-bold transition ${
+        studentPage === "study-plan"
+          ? "bg-blue-600 text-white shadow-sm"
+          : "text-blue-700 hover:bg-blue-100"
+      }`}
+    >
+      My Study Plan
+    </button>
   </div>
 )}
             
@@ -2842,6 +2855,8 @@ if (loggedInUser?.mustChangePassword) {
   <MyPreferences />
 ) : studentPage === "goals" ? (
   <MyGoals />
+) : studentPage === "study-plan" ? (
+  <MyStudyPlan />
 ) : (
   <MyCourses />
 )}
