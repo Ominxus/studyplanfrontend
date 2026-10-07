@@ -1,12 +1,30 @@
 import axios from "axios";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const STUDY_PLAN_API = `${API_BASE_URL}/api/student/plans`;
-const STUDY_SESSION_API = `${API_BASE_URL}/api/student/sessions`;
 
-export const generateStudyPlan = async (request) => {
+const STUDY_PLAN_API =
+  `${API_BASE_URL}/api/student/plans`;
+
+const STUDY_SESSION_API =
+  `${API_BASE_URL}/api/student/sessions`;
+
+export const generateStudyPlan = async (
+  request
+) => {
   const response = await axios.post(
     `${STUDY_PLAN_API}/generate`,
+    request
+  );
+
+  return response.data;
+};
+
+export const replanStudyPlan = async (
+  planId,
+  request
+) => {
+  const response = await axios.post(
+    `${STUDY_PLAN_API}/${planId}/replan`,
     request
   );
 
