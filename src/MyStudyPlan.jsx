@@ -12,6 +12,7 @@ import {
 } from "./services/studyPlanService";
 
 import DurationInput from "./components/DurationInput";
+import AiPlanningInsight from "./AiPlanningInsight";
 
 function toDateInputValue(date) {
   const year = date.getFullYear();
@@ -715,6 +716,10 @@ export default function MyStudyPlan() {
           completed progress.
         </p>
       </section>
+
+      <div className="mb-6">
+        <AiPlanningInsight />
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
         <section className="h-fit rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
