@@ -39,6 +39,14 @@ export const getLatestStudyPlan = async () => {
   return response.data;
 };
 
+export const getStudyPlanHistory = async () => {
+  const response = await axios.get(
+    `${STUDY_PLAN_API}/history`
+  );
+
+  return response.data;
+};
+
 export const completeStudySession = async (
   sessionId,
   actualMinutes

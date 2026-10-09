@@ -13,6 +13,7 @@ import {
 
 import DurationInput from "./components/DurationInput";
 import AiPlanningInsight from "./AiPlanningInsight";
+import PlanHistory from "./PlanHistory";
 
 function toDateInputValue(date) {
   const year = date.getFullYear();
@@ -1286,6 +1287,12 @@ export default function MyStudyPlan() {
             </div>
           )}
         </section>
+      </div>
+
+      <div className="mt-6">
+        <PlanHistory
+          refreshKey={`${plan?.id ?? "none"}-${completedCount}-${actualMinutes}`}
+        />
       </div>
     </div>
   );
